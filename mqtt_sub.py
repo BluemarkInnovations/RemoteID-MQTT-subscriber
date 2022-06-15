@@ -17,7 +17,7 @@ import lzma
 import datetime
 
 broker = 'myserver'
-port = 8183
+port = 8883
 topic = "#"
 
 # generate client ID with pub prefix randomly
