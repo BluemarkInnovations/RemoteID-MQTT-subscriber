@@ -2,12 +2,16 @@
 # (c) Bluemark Innovations BV 
 # MIT license
 
+# use 
+# pip3 install paho-mqtt bitstruct 
+# to install missing modules (tested under ubuntu)
+
+
 import random
 import ssl
 import json
 import base64
 from paho.mqtt import client as mqtt_client
-from pymavlink import mavutil
 from bitstruct import *
 import lzma
 import datetime
