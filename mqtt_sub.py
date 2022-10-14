@@ -64,8 +64,8 @@ def subscribe(client: mqtt_client):
         try:
 			#not compressed
             payload = msg.payload.decode()
-            # remove newline char as it will prevent decoding of json
-            if ord(payload[-1:]) == 10:
+            # remove newline (\n) char or \0 char as it will prevent decoding of json
+            if ord(payload[-1:]) == 0 or ord(payload[-1:]) == 10:
                 payload = payload[:-1]
         except (UnicodeDecodeError, AttributeError):
 			#lzma compressed
