@@ -1,9 +1,9 @@
 #!/usr/bin/python3
-# (c) Bluemark Innovations BV 
+# (c) Bluemark Innovations BV
 # MIT license
 
-# use 
-# pip3 install paho-mqtt bitstruct 
+# use
+# pip3 install paho-mqtt bitstruct
 # to install missing modules (tested under ubuntu)
 
 
@@ -15,6 +15,7 @@ from paho.mqtt import client as mqtt_client
 from bitstruct import *
 import lzma
 import datetime
+import pytz
 
 broker = 'myserver'
 port = 8883
@@ -87,8 +88,8 @@ def subscribe(client: mqtt_client):
                     print("RSSI......",  data_json.get('RSSI'))
                     print("channel......",  data_json.get('channel'))
                     print("timestamp......",  data_json.get('timestamp'))
-                    epoch_timestamp = datetime.datetime.fromtimestamp(data_json.get('timestamp')/1000)
-                    print("time (local)......",  epoch_timestamp.strftime('%Y-%m-%d %H:%M:%S.%f')[:-3])                                        
+                    epoch_timestamp = datetime.datetime.fromtimestamp(data_json.get('timestamp')/1000, pytz.UTC)
+                    print("time (of timestamp)......",  epoch_timestamp.strftime('%Y-%m-%d %H:%M:%S.%f')[:-4])
                     print("MAC address......",  data_json.get('MAC address'))
                     print("type......",  data_json.get('type'))
 
@@ -159,7 +160,7 @@ def subscribe(client: mqtt_client):
                         print("BaroAccuracy......",  BaroAccuracy)
                         print("SpeedAccuracy......",  SpeedAccuracy)
                         print("TSAccuracy......",  TSAccuracy)
-                        print("TimeStamp......", int(TimeStamp/60), ":" , int(TimeStamp % 60),sep="")
+                        print("TimeStamp (MM:SS.mm).....%02i:%02i.%02i" % (int(TimeStamp/60), int(TimeStamp % 60), int(100*(TimeStamp - int(TimeStamp)))))
                         print("")
 
                     #SelfIDValid message
@@ -175,26 +176,26 @@ def subscribe(client: mqtt_client):
                     #SystemValid message
                     if SystemValid == 1:
                         print("System data")
-                        Location_start_byte = 808
-                        [OperatorLocationType] =  struct.unpack('i', UASdata[Location_start_byte:Location_start_byte + 4])
-                        [ClassificationType] =  struct.unpack('i', UASdata[Location_start_byte + 4:Location_start_byte + 4+ 4])
+                        System_start_byte = 808
+                        [OperatorLocationType] =  struct.unpack('i', UASdata[System_start_byte:System_start_byte + 4])
+                        [ClassificationType] =  struct.unpack('i', UASdata[System_start_byte + 4:System_start_byte + 4+ 4])
 
                         print("Operator Location Type......",  OperatorLocationType)
                         print("Classification Type......",  ClassificationType)
 
-                        [OperatorLatitude] =  struct.unpack('d', UASdata[Location_start_byte + 8:Location_start_byte + 8 + 8])
-                        [OperatorLongitude] = struct.unpack('d', UASdata[Location_start_byte + 16:Location_start_byte + 16 + 8])
+                        [OperatorLatitude] =  struct.unpack('d', UASdata[System_start_byte + 8:System_start_byte + 8 + 8])
+                        [OperatorLongitude] = struct.unpack('d', UASdata[System_start_byte + 16:System_start_byte + 16 + 8])
                         print("Operator Latitude......",  OperatorLatitude)
                         print("Operator Longitude......",  OperatorLongitude)
 
-                        [AreaCount] =  struct.unpack('h', UASdata[Location_start_byte + 24:Location_start_byte + 24 + 2])
-                        [AreaRadius] =  struct.unpack('h', UASdata[Location_start_byte + 26:Location_start_byte + 26 + 2])
-                        [AreaCeiling] =  struct.unpack('f', UASdata[Location_start_byte + 28:Location_start_byte + 28 + 4])
-                        [AreaFloor] =  struct.unpack('f', UASdata[Location_start_byte + 32:Location_start_byte + 32 + 4])
-                        [CategoryEU] =  struct.unpack('i', UASdata[Location_start_byte + 36:Location_start_byte + 36 + 4])
-                        [ClassEU] =  struct.unpack('i', UASdata[Location_start_byte + 40:Location_start_byte + 40 + 4])
-                        [OperatorAltitudeGeo] =  struct.unpack('f', UASdata[Location_start_byte + 44:Location_start_byte + 44 + 4])
-                        [Timestamp] =  struct.unpack('i', UASdata[Location_start_byte + 48:Location_start_byte + 48 + 4])
+                        [AreaCount] =  struct.unpack('H', UASdata[System_start_byte + 24:System_start_byte + 24 + 2])
+                        [AreaRadius] =  struct.unpack('H', UASdata[System_start_byte + 26:System_start_byte + 26 + 2])
+                        [AreaCeiling] =  struct.unpack('f', UASdata[System_start_byte + 28:System_start_byte + 28 + 4])
+                        [AreaFloor] =  struct.unpack('f', UASdata[System_start_byte + 32:System_start_byte + 32 + 4])
+                        [CategoryEU] =  struct.unpack('i', UASdata[System_start_byte + 36:System_start_byte + 36 + 4])
+                        [ClassEU] =  struct.unpack('i', UASdata[System_start_byte + 40:System_start_byte + 40 + 4])
+                        [OperatorAltitudeGeo] =  struct.unpack('f', UASdata[System_start_byte + 44:System_start_byte + 44 + 4])
+                        [Timestamp] =  struct.unpack('I', UASdata[System_start_byte + 48:System_start_byte + 48 + 4])
                         print("Area Count......",  AreaCount)
                         print("Area Radius......",  AreaRadius)
                         print("Area Ceiling......",  AreaCeiling)
@@ -202,7 +203,7 @@ def subscribe(client: mqtt_client):
                         print("Category EU......",  CategoryEU)
                         print("Class EU......",  ClassEU)
                         print("Operator Altitude Geo......",  OperatorAltitudeGeo)
-                        print("Timestamp......",  Timestamp)
+                        print("Timestamp......",  datetime.datetime.fromtimestamp((int(Timestamp) + 1546300800), pytz.UTC).strftime('%Y-%m-%d %H:%M %Z'))
                         print("")
 
                     #OperatorIDValid message
@@ -224,10 +225,10 @@ def subscribe(client: mqtt_client):
                     print("sensor ID......",  status_json.get('sensor ID'))
                     print("timestamp......",  status_json.get('timestamp'))
                     epoch_timestamp = datetime.datetime.fromtimestamp(status_json.get('timestamp')/1000)
-                    print("time (local)......",  epoch_timestamp.strftime('%Y-%m-%d %H:%M:%S.%f')[:-3])                    
+                    print("time (local)......",  epoch_timestamp.strftime('%Y-%m-%d %H:%M:%S.%f')[:-3])
                     print("firmware version......",  status_json.get('firmware version'))
                     print("model......",  status_json.get('model'))
-                    print("status......",  status_json.get('status'))                    
+                    print("status......",  status_json.get('status'))
                     print("")
                 except:
                     pass
@@ -236,10 +237,10 @@ def subscribe(client: mqtt_client):
 
     client.subscribe(topic)
     client.on_message = on_message
-   
+
 def run():
-    
-    client = connect_mqtt()            
+
+    client = connect_mqtt()
     client.loop_forever()
 
 
