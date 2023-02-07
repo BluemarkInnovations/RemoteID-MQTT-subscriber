@@ -21,9 +21,9 @@ import config # config.py with MQTT broker configuration
 
 def connect_mqtt() -> mqtt_client:
     client = mqtt_client.Client(config.client_id)
-    
+
     def on_connect(client, userdata, flags, rc):
-        if rc == 0:            
+        if rc == 0:
             print("Connected to MQTT Broker!")
         else:
             print("Failed to connect, return code %d\n", rc)
@@ -118,22 +118,38 @@ def subscribe(client: mqtt_client):
                         [Status] =  struct.unpack('i', UASdata[Location_start_byte:Location_start_byte + 4])
                         print("Status......",  Status)
                         [Direction] =  struct.unpack('f', UASdata[Location_start_byte + 4:Location_start_byte + 4 + 4])
+                        if Direction > 360 or Direction < 0:
+                            Direction = float("NaN")
                         print("Direction......",  Direction)
                         [SpeedHorizontal] =  struct.unpack('f', UASdata[Location_start_byte + 8:Location_start_byte + 8 + 4])
+                        if SpeedHorizontal > 254.25 or SpeedHorizontal < 0:
+                            SpeedHorizontal = float("NaN")
                         [SpeedVertical] =  struct.unpack('f', UASdata[Location_start_byte + 12:Location_start_byte + 12 + 4])
                         print("SpeedHorizontal......",  SpeedHorizontal)
+                        if SpeedVertical > 62 or SpeedVertical < -62:
+                            SpeedVertical = float("NaN")
                         print("SpeedVertical......",  SpeedVertical)
                         [Latitude] =  struct.unpack('d', UASdata[Location_start_byte + 16:Location_start_byte + 16 + 8])
+                        if Latitude == 0.0 or Latitude > 90.0 or Latitude < -90.0:
+                            Latitude = float("NaN")
                         [Longitude] =  struct.unpack('d', UASdata[Location_start_byte + 24:Location_start_byte + 24 + 8])
+                        if Longitude == 0.0 or Longitude > 180.0 or Longitude < -180.0:
+                            Longitude = float("NaN")
                         print("Latitude......",  Latitude)
                         print("Longitude......",  Longitude)
 
                         [AltitudeBaro] =  struct.unpack('f', UASdata[Location_start_byte + 32:Location_start_byte + 32 + 4])
+                        if AltitudeBaro <= -1000.0 or AltitudeBaro > 31767.5:
+                            AltitudeBaro = float("NaN")
                         [AltitudeGeo] =  struct.unpack('f', UASdata[Location_start_byte + 36:Location_start_byte + 36 + 4])
+                        if AltitudeGeo <= -1000.0 or AltitudeGeo > 31767.5:
+                            AltitudeGeo = float("NaN")
                         print("AltitudeBaro......",  AltitudeBaro)
                         print("AltitudeGeo......",  AltitudeGeo)
                         [HeightType] =  struct.unpack('i', UASdata[Location_start_byte + 40:Location_start_byte + 40 + 4])
                         [Height] =  struct.unpack('f', UASdata[Location_start_byte + 44:Location_start_byte + 44 + 4])
+                        if Height <= -1000.0 or Height > 31767.5:
+                            Height = float("NaN")
                         print("HeightType......",  HeightType)
                         print("Height......",  Height)
                         [HorizAccuracy] =  struct.unpack('i', UASdata[Location_start_byte + 48:Location_start_byte + 48 + 4])
@@ -148,7 +164,10 @@ def subscribe(client: mqtt_client):
                         print("BaroAccuracy......",  BaroAccuracy)
                         print("SpeedAccuracy......",  SpeedAccuracy)
                         print("TSAccuracy......",  TSAccuracy)
-                        print("TimeStamp (MM:SS.mm).....%02i:%02i.%02i" % (int(TimeStamp/60), int(TimeStamp % 60), int(100*(TimeStamp - int(TimeStamp)))))
+                        if Timestamp != float("NaN") and Timestamp != 0 and Timestamp <= 60*60:
+                            print("TimeStamp (MM:SS.mm).....%02i:%02i.%02i" % (int(TimeStamp/60), int(TimeStamp % 60), int(100*(TimeStamp - int(TimeStamp)))))
+                        else:
+                            print("Timestamp......invalid")
                         print("")
 
                     #SelfIDValid message
@@ -173,16 +192,28 @@ def subscribe(client: mqtt_client):
 
                         [OperatorLatitude] =  struct.unpack('d', UASdata[System_start_byte + 8:System_start_byte + 8 + 8])
                         [OperatorLongitude] = struct.unpack('d', UASdata[System_start_byte + 16:System_start_byte + 16 + 8])
+
+                        if OperatorLatitude == 0.0 or OperatorLatitude > 90.0 or OperatorLatitude < -90.0:
+                            OperatorLatitude = float("NaN")
+                        if OperatorLongitude == 0.0 or OperatorLongitude > 180.0 or OperatorLongitude < -180.0:
+                            OperatorLongitude = float("NaN")
+
                         print("Operator Latitude......",  OperatorLatitude)
                         print("Operator Longitude......",  OperatorLongitude)
 
                         [AreaCount] =  struct.unpack('H', UASdata[System_start_byte + 24:System_start_byte + 24 + 2])
                         [AreaRadius] =  struct.unpack('H', UASdata[System_start_byte + 26:System_start_byte + 26 + 2])
                         [AreaCeiling] =  struct.unpack('f', UASdata[System_start_byte + 28:System_start_byte + 28 + 4])
+                        if AreaCeiling == -1000:
+                            AreaCeiling = float("NaN")
                         [AreaFloor] =  struct.unpack('f', UASdata[System_start_byte + 32:System_start_byte + 32 + 4])
+                        if AreaFloor == -1000:
+                            AreaFloor = float("NaN")
                         [CategoryEU] =  struct.unpack('i', UASdata[System_start_byte + 36:System_start_byte + 36 + 4])
                         [ClassEU] =  struct.unpack('i', UASdata[System_start_byte + 40:System_start_byte + 40 + 4])
                         [OperatorAltitudeGeo] =  struct.unpack('f', UASdata[System_start_byte + 44:System_start_byte + 44 + 4])
+                        if OperatorAltitudeGeo <= -1000.0 or OperatorAltitudeGeo > 31767.5:
+                            OperatorAltitudeGeo = float("NaN")
                         [Timestamp] =  struct.unpack('I', UASdata[System_start_byte + 48:System_start_byte + 48 + 4])
                         print("Area Count......",  AreaCount)
                         print("Area Radius......",  AreaRadius)
@@ -191,7 +222,12 @@ def subscribe(client: mqtt_client):
                         print("Category EU......",  CategoryEU)
                         print("Class EU......",  ClassEU)
                         print("Operator Altitude Geo......",  OperatorAltitudeGeo)
-                        print("Timestamp......",  datetime.datetime.fromtimestamp((int(Timestamp) + 1546300800), pytz.UTC).strftime('%Y-%m-%d %H:%M %Z'))
+
+                        if Timestamp != float("NaN") and Timestamp != 0:
+                            print("Timestamp......",  datetime.datetime.fromtimestamp((int(Timestamp) + 1546300800), pytz.UTC).strftime('%Y-%m-%d %H:%M %Z'))
+                        else:
+                            print("Timestamp......invalid")
+                        print("Timestamp raw......",  Timestamp)
                         print("")
 
                     #OperatorIDValid message
