@@ -11,7 +11,7 @@ sudo pip3 install paho-mqtt bitstruct
 ```
 
 ## Configuration
-In the mqtt_sub.py file, enter the correct settings for the broker, port. Leave the topic to "#" to recieve messages from all topics. Also add a username and password if your MQTT broker needs it. It is also strongly adviced to used secure SSL connection to the MQTT broker (port 8883). For that also set the client_pem file.
+In the config.py file, enter the correct settings for the broker, port. Leave the topic to "#" to recieve messages from all topics. Also add a username and password if your MQTT broker needs it. It is also strongly adviced to used secure SSL connection to the MQTT broker (port 8883). For that also set the client_pem file. In case of non-SSL connections, use the port 1883.
 
 ## Usage
 Start the script to receive and show Remote ID signals of nearby drones.
