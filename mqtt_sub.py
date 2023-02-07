@@ -17,42 +17,30 @@ import lzma
 import datetime
 import pytz
 
-broker = 'myserver'
-port = 8883
-topic = "#"
-
-# generate client ID with pub prefix randomly
-client_id = f'mqtt-subscriber-{random.randint(0, 100)}'
-
-#optional user/password for connecting to the MQTT broker, uncomment if used.
-#username = 'myusername'
-#password = 'mypassword'
-
-#file containing full SSL chain, uncomment when MQTT broker uses encrypted messages [preferred]
-client_pem = "./certs/client.pem"
+import config # config.py with MQTT broker configuration
 
 def connect_mqtt() -> mqtt_client:
+    client = mqtt_client.Client(config.client_id)
+    
     def on_connect(client, userdata, flags, rc):
-        if rc == 0:
+        if rc == 0:            
             print("Connected to MQTT Broker!")
         else:
             print("Failed to connect, return code %d\n", rc)
 
-    client = mqtt_client.Client(client_id)
-
     #if username and password is set
     if 'username' in globals():
             print("username/password enabled")
-            client.username_pw_set(username, password)
+            client.username_pw_set(config.username, config.password)
 
     #if ssl is enabled
-    if 'client_pem' in globals():
+    if 'config.client_pem' in globals():
             print("ssl enabled")
-            client.tls_set(client_pem, tls_version=ssl.PROTOCOL_TLSv1_2)
+            client.tls_set(config.client_pem, tls_version=ssl.PROTOCOL_TLSv1_2)
             client.tls_insecure_set(True)
 
     client.on_connect = on_connect
-    client.connect(broker, port)
+    client.connect(config.broker, config.port)
 
     subscribe(client)
     return client
@@ -235,7 +223,7 @@ def subscribe(client: mqtt_client):
         except:
             pass
 
-    client.subscribe(topic)
+    client.subscribe(config.topic)
     client.on_message = on_message
 
 def run():
