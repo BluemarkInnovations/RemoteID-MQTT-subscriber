@@ -29,15 +29,20 @@ def connect_mqtt() -> mqtt_client:
             print("Failed to connect, return code %d\n", rc)
 
     #if username and password is set
-    if 'username' in globals():
+    if hasattr(config, 'username'):
             print("username/password enabled")
             client.username_pw_set(config.username, config.password)
 
     #if ssl is enabled
-    if 'config.client_pem' in globals():
+    if hasattr(config, 'client_pem'):
             print("ssl enabled")
+
+            #use this line if you have valid certificates
             client.tls_set(config.client_pem, tls_version=ssl.PROTOCOL_TLSv1_2)
-            client.tls_insecure_set(True)
+
+            #if you use *self-generated certificates*, use these lines instead:
+            #client.tls_set(config.client_pem, tls_version=ssl.PROTOCOL_TLSv1_2,cert_reqs=ssl.CERT_NONE)
+            #client.tls_insecure_set(True)
 
     client.on_connect = on_connect
     client.connect(config.broker, config.port)
