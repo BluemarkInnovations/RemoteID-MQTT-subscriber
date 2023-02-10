@@ -38,11 +38,11 @@ def connect_mqtt() -> mqtt_client:
             print("ssl enabled")
 
             #use this line if you have valid certificates
-            client.tls_set(config.client_pem, tls_version=ssl.PROTOCOL_TLSv1_2)
+            #client.tls_set(config.client_pem, tls_version=ssl.PROTOCOL_TLSv1_2)
 
             #if you use *self-generated certificates*, use these lines instead:
-            #client.tls_set(config.client_pem, tls_version=ssl.PROTOCOL_TLSv1_2,cert_reqs=ssl.CERT_NONE)
-            #client.tls_insecure_set(True)
+            client.tls_set(config.client_pem, tls_version=ssl.PROTOCOL_TLSv1_2,cert_reqs=ssl.CERT_NONE)
+            client.tls_insecure_set(True)
 
     client.on_connect = on_connect
     client.connect(config.broker, config.port)
@@ -169,7 +169,7 @@ def subscribe(client: mqtt_client):
                         print("BaroAccuracy......",  BaroAccuracy)
                         print("SpeedAccuracy......",  SpeedAccuracy)
                         print("TSAccuracy......",  TSAccuracy)
-                        if Timestamp != float("NaN") and Timestamp != 0 and Timestamp <= 60*60:
+                        if TimeStamp != float("NaN") and TimeStamp > 0 and TimeStamp <= 60*60:
                             print("TimeStamp (MM:SS.mm).....%02i:%02i.%02i" % (int(TimeStamp/60), int(TimeStamp % 60), int(100*(TimeStamp - int(TimeStamp)))))
                         else:
                             print("Timestamp......invalid")
