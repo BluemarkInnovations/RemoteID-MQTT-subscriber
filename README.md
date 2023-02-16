@@ -7,7 +7,7 @@ This repository contains reference code to subscribe to a MQTT broker and parse 
 The code is Python3 code. It needs these dependencies (tested under Ubuntu):
 
 ```
-sudo pip3 install paho-mqtt bitstruct 
+sudo pip3 install paho-mqtt bitstruct pytz
 ```
 
 ## Configuration
