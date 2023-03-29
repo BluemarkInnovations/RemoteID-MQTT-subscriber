@@ -20,6 +20,7 @@ import pytz
 import config # config.py with MQTT broker configuration
 
 from modules import open_drone_id
+from modules import log_remote_id
 
 class open_drone_id_valid_blocks():
     BasicID0_valid = 0
@@ -106,9 +107,15 @@ def subscribe(client: mqtt_client):
                         print("MAC address......",  data_json.get('MAC address'))
                         print("type......",  data_json.get('type'))
 
-                        valid_open_drone_idblocks = open_drone_id_valid_blocks()
-                        open_drone_id.decode_valid_blocks(UASdata, valid_open_drone_idblocks)
-                        open_drone_id.print_payload(UASdata, valid_open_drone_idblocks)
+                        valid_open_drone_id_blocks = open_drone_id_valid_blocks()
+                        open_drone_id.decode_valid_blocks(UASdata, valid_open_drone_id_blocks)
+
+                        if hasattr(config, 'log_path'):
+                            log_remote_id.write_csv(data_json,UASdata, valid_open_drone_id_blocks,filename)
+
+                        open_drone_id.print_payload(UASdata, valid_open_drone_id_blocks)
+
+
 
                     except:
                         pass
@@ -134,6 +141,9 @@ def subscribe(client: mqtt_client):
     client.on_message = on_message
 
 def run():
+    if hasattr(config, 'log_path'):
+        global filename
+        filename = log_remote_id.open_csv(config.log_path)
 
     client = connect_mqtt()
     client.loop_forever()
