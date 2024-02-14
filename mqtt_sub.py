@@ -36,6 +36,7 @@ def connect_mqtt() -> mqtt_client:
     def on_connect(client, userdata, flags, rc):
         if rc == 0:
             print("Connected to MQTT Broker!")
+            subscribe(client)
         else:
             print("Failed to connect, return code %d\n", rc)
 
@@ -65,7 +66,6 @@ def connect_mqtt() -> mqtt_client:
 def subscribe(client: mqtt_client):
     def on_message(client, userdata, msg):
         print(f"Received message from topic `{msg.topic}`")
-
         try:
 			#not compressed
             payload = msg.payload.decode()
@@ -74,14 +74,13 @@ def subscribe(client: mqtt_client):
                 payload = payload[:-1]
         except (UnicodeDecodeError, AttributeError):
 			#lzma compressed
-            payload = lzma.decompress(msg.payload)
+            payload = lzma.decompress(msg.payload).decode()
             # remove \0 char as it will prevent decoding of json
             if ord(payload[-1:]) == 0:
                 payload = payload[:-1]
 
         #print(payload) #uncomment tp print raw payload
 
-        payload = payload.decode()
         position = 0
         while position != -1:
             position = payload.find('}{')
