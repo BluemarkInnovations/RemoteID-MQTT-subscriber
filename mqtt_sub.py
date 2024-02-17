@@ -31,7 +31,10 @@ class open_drone_id_valid_blocks():
     OperatorIDValid = 0
 
 def connect_mqtt() -> mqtt_client:
-    client = mqtt_client.Client(config.client_id)
+    if hasattr(mqtt_client, 'CallbackAPIVersion'):
+        client = mqtt_client.Client(mqtt_client.CallbackAPIVersion.VERSION1,config.client_id)
+    else:
+        client = mqtt_client.Client(config.client_id)
 
     def on_connect(client, userdata, flags, rc):
         if rc == 0:
