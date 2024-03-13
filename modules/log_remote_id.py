@@ -17,7 +17,24 @@ def open_csv(log_path):
          + ['DescType'] + ['Desc']
          + ['OperatorLocationType'] + ['ClassificationType'] + ['OperatorLatitude'] + ['OperatorLongitude'] + ['AreaCount'] + ['AreaRadius'] + ['AreaCeiling'] + ['AreaFloor'] + ['CategoryEU'] + ['ClassEU'] + ['OperatorAltitudeGeo'] + ['TimeStamp System'] + ['time of Timestamp System']
          + ['OperatorIdType'] + ['OperatorId']
+         + ['AuthPage_0_DataPage'] + ['AuthPage_0_AuthType'] + ['AuthPage_0_LastPageIndex'] + ['AuthPage_0_Length'] + ['AuthPage_0_Timestamp'] + ['AuthPage_0_Data']
+         + ['AuthPage_1_DataPage'] + ['AuthPage_1_AuthType'] + ['AuthPage_1_Data']
+         + ['AuthPage_2_DataPage'] + ['AuthPage_2_AuthType'] + ['AuthPage_2_Data']
+         + ['AuthPage_3_DataPage'] + ['AuthPage_3_AuthType'] + ['AuthPage_3_Data']
+         + ['AuthPage_4_DataPage'] + ['AuthPage_4_AuthType'] + ['AuthPage_4_Data']
+         + ['AuthPage_5_DataPage'] + ['AuthPage_5_AuthType'] + ['AuthPage_5_Data']
+         + ['AuthPage_6_DataPage'] + ['AuthPage_6_AuthType'] + ['AuthPage_6_Data']
+         + ['AuthPage_7_DataPage'] + ['AuthPage_7_AuthType'] + ['AuthPage_7_Data']
+         + ['AuthPage_8_DataPage'] + ['AuthPage_8_AuthType'] + ['AuthPage_8_Data']
+         + ['AuthPage_9_DataPage'] + ['AuthPage_9_AuthType'] + ['AuthPage_9_Data']
+         + ['AuthPage_10_DataPage'] + ['AuthPage_10_AuthType'] + ['AuthPage_10_Data']
+         + ['AuthPage_11_DataPage'] + ['AuthPage_11_AuthType'] + ['AuthPage_11_Data']
+         + ['AuthPage_12_DataPage'] + ['AuthPage_12_AuthType'] + ['AuthPage_12_Data']
+         + ['AuthPage_13_DataPage'] + ['AuthPage_13_AuthType'] + ['AuthPage_13_Data']
+         + ['AuthPage_14_DataPage'] + ['AuthPage_14_AuthType'] + ['AuthPage_14_Data']
+         + ['AuthPage_15_DataPage'] + ['AuthPage_15_AuthType'] + ['AuthPage_15_Data']
          )
+
     return filename
 
 
@@ -171,12 +188,215 @@ def write_csv(data_json, payload, valid_blocks, filename):
             OperatorIdType = 0
             OperatorId = ''
 
+ #set to empty auth data first
+        AuthPage_0_DataPage = ''
+        AuthPage_0_AuthType = ''
+        AuthPage_0_Length = 0
+        AuthPage_0_LastPageIndex = ''
+        AuthPage_0_Timestamp = ''
+        AuthPage_0_Data = ''
+        AuthPage_1_DataPage = ''
+        AuthPage_1_AuthType = ''
+        AuthPage_1_Data = ''
+        AuthPage_2_DataPage = ''
+        AuthPage_2_AuthType = ''
+        AuthPage_2_Data = ''
+        AuthPage_3_DataPage = ''
+        AuthPage_3_AuthType = ''
+        AuthPage_3_Data = ''
+        AuthPage_4_DataPage = ''
+        AuthPage_4_AuthType = ''
+        AuthPage_4_Data = ''
+        AuthPage_5_DataPage = ''
+        AuthPage_5_AuthType = ''
+        AuthPage_5_Data = ''
+        AuthPage_6_DataPage = ''
+        AuthPage_6_AuthType = ''
+        AuthPage_6_Data = ''
+        AuthPage_7_DataPage = ''
+        AuthPage_7_AuthType = ''
+        AuthPage_7_Data = ''
+        AuthPage_8_DataPage = ''
+        AuthPage_8_AuthType = ''
+        AuthPage_8_Data = ''
+        AuthPage_9_DataPage = ''
+        AuthPage_9_AuthType = ''
+        AuthPage_9_Data = ''
+        AuthPage_10_DataPage = ''
+        AuthPage_10_AuthType = ''
+        AuthPage_10_Data = ''
+        AuthPage_11_DataPage = ''
+        AuthPage_11_AuthType = ''
+        AuthPage_11_Data = ''
+        AuthPage_12_DataPage = ''
+        AuthPage_12_AuthType = ''
+        AuthPage_12_Data = ''
+        AuthPage_13_DataPage = ''
+        AuthPage_13_AuthType = ''
+        AuthPage_13_Data = ''
+
+        #only save if AuthValid for this auth page is valid
+        #in case of BT4 the length parameter cannot be used for the last page, so all data in that page is saved
+        AuthPage_start_byte = 136 + 40*0
+        if valid_blocks.AuthValid[0] == 1:
+            [AuthPage_0_DataPage] = struct.unpack('B', payload[AuthPage_start_byte + 0:AuthPage_start_byte + 1])
+            [AuthPage_0_AuthType] = struct.unpack('B', payload[AuthPage_start_byte + 4:AuthPage_start_byte + 5])
+            [AuthPage_0_LastPageIndex] = struct.unpack('B', payload[AuthPage_start_byte + 8:AuthPage_start_byte + 9])
+            [AuthPage_0_Length] = struct.unpack('B', payload[AuthPage_start_byte + 9:AuthPage_start_byte + 10])
+            [AuthPage_0_Timestamp] =  struct.unpack('I', payload[AuthPage_start_byte + 12:AuthPage_start_byte + 12 + 4])
+            if AuthPage_0_Length > 17:
+                AuthPage_0_Data = payload[AuthPage_start_byte + 16:AuthPage_start_byte + 16 + 17].hex()
+            else:
+                AuthPage_0_Data = payload[AuthPage_start_byte + 16:AuthPage_start_byte + 16 + AuthPage_0_Length].hex()
+
+        auth_page = 1
+        AuthPage_start_byte = 136 + 40*auth_page
+        if valid_blocks.AuthValid[auth_page] == 1:
+            [AuthPage_1_AuthType] = struct.unpack('B', payload[AuthPage_start_byte + 4:AuthPage_start_byte + 5])
+            [AuthPage_1_DataPage] = struct.unpack('B', payload[AuthPage_start_byte + 0:AuthPage_start_byte + 1])
+            if AuthPage_0_Length > (23 + 17) or AuthPage_0_Length == 0:
+                AuthPage_1_Data = payload[AuthPage_start_byte + 16:AuthPage_start_byte + 16 + auth_page*23].hex()
+            else:
+                AuthPage_1_Data = payload[AuthPage_start_byte + 16:AuthPage_start_byte + 16 + (AuthPage_0_Length - 17 - 23*(auth_page - 1))].hex()
+
+        auth_page = 2
+        AuthPage_start_byte = 136 + 40*auth_page
+        if valid_blocks.AuthValid[auth_page] == 1:
+            [AuthPage_2_AuthType] = struct.unpack('B', payload[AuthPage_start_byte + 4:AuthPage_start_byte + 5])
+            [AuthPage_2_DataPage] = struct.unpack('B', payload[AuthPage_start_byte + 0:AuthPage_start_byte + 1])
+            if AuthPage_0_Length > (auth_page*23 + 17) or AuthPage_0_Length == 0:
+                AuthPage_2_Data = payload[AuthPage_start_byte + 16:AuthPage_start_byte + 16 + 23].hex()
+            else:
+                AuthPage_2_Data = payload[AuthPage_start_byte + 16:AuthPage_start_byte + 16 + (AuthPage_0_Length - 17 - 23*(auth_page - 1))].hex()
+
+        auth_page = 3
+        AuthPage_start_byte = 136 + 40*auth_page
+        if valid_blocks.AuthValid[auth_page] == 1:
+            [AuthPage_3_AuthType] = struct.unpack('B', payload[AuthPage_start_byte + 4:AuthPage_start_byte + 5])
+            [AuthPage_3_DataPage] = struct.unpack('B', payload[AuthPage_start_byte + 0:AuthPage_start_byte + 1])
+            if AuthPage_0_Length > (auth_page*23 + 17) or AuthPage_0_Length == 0:
+                AuthPage_3_Data = payload[AuthPage_start_byte + 16:AuthPage_start_byte + 16 + 23].hex()
+            else:
+                AuthPage_3_Data = payload[AuthPage_start_byte + 16:AuthPage_start_byte + 16 + (AuthPage_0_Length - 17 - 23*(auth_page - 1))].hex()
+
+        auth_page = 4
+        AuthPage_start_byte = 136 + 40*auth_page
+        if valid_blocks.AuthValid[auth_page] == 1:
+            [AuthPage_4_AuthType] = struct.unpack('B', payload[AuthPage_start_byte + 4:AuthPage_start_byte + 5])
+            [AuthPage_4_DataPage] = struct.unpack('B', payload[AuthPage_start_byte + 0:AuthPage_start_byte + 1])
+            if AuthPage_0_Length > (auth_page*23 + 17) or AuthPage_0_Length == 0:
+                AuthPage_4_Data = payload[AuthPage_start_byte + 16:AuthPage_start_byte + 16 + 23].hex()
+            else:
+                AuthPage_4_Data = payload[AuthPage_start_byte + 16:AuthPage_start_byte + 16 + (AuthPage_0_Length - 17 - 23*(auth_page - 1))].hex()
+
+        auth_page = 5
+        AuthPage_start_byte = 136 + 40*auth_page
+        if valid_blocks.AuthValid[auth_page] == 1:
+            [AuthPage_5_AuthType] = struct.unpack('B', payload[AuthPage_start_byte + 4:AuthPage_start_byte + 5])
+            [AuthPage_5_DataPage] = struct.unpack('B', payload[AuthPage_start_byte + 0:AuthPage_start_byte + 1])
+            if AuthPage_0_Length > (auth_page*23 + 17) or AuthPage_0_Length == 0:
+                AuthPage_5_Data = payload[AuthPage_start_byte + 16:AuthPage_start_byte + 16 + 23].hex()
+            else:
+                AuthPage_5_Data = payload[AuthPage_start_byte + 16:AuthPage_start_byte + 16 + (AuthPage_0_Length - 17 - 23*(auth_page - 1))].hex()
+
+        auth_page = 6
+        AuthPage_start_byte = 136 + 40*auth_page
+        if valid_blocks.AuthValid[auth_page] == 1:
+            [AuthPage_6_AuthType] = struct.unpack('B', payload[AuthPage_start_byte + 4:AuthPage_start_byte + 5])
+            [AuthPage_6_DataPage] = struct.unpack('B', payload[AuthPage_start_byte + 0:AuthPage_start_byte + 1])
+            if AuthPage_0_Length > (auth_page*23 + 17) or AuthPage_0_Length == 0:
+                AuthPage_6_Data = payload[AuthPage_start_byte + 16:AuthPage_start_byte + 16 + 23].hex()
+            else:
+                AuthPage_6_Data = payload[AuthPage_start_byte + 16:AuthPage_start_byte + 16 + (AuthPage_0_Length - 17 - 23*(auth_page - 1))].hex()
+
+        auth_page = 7
+        AuthPage_start_byte = 136 + 40*auth_page
+        if valid_blocks.AuthValid[auth_page] == 1:
+            [AuthPage_7_AuthType] = struct.unpack('B', payload[AuthPage_start_byte + 4:AuthPage_start_byte + 5])
+            [AuthPage_7_DataPage] = struct.unpack('B', payload[AuthPage_start_byte + 0:AuthPage_start_byte + 1])
+            if AuthPage_0_Length > (auth_page*23 + 17) or AuthPage_0_Length == 0:
+                AuthPage_7_Data = payload[AuthPage_start_byte + 16:AuthPage_start_byte + 16 + 23].hex()
+            else:
+                AuthPage_7_Data = payload[AuthPage_start_byte + 16:AuthPage_start_byte + 16 + (AuthPage_0_Length - 17 - 23*(auth_page - 1))].hex()
+
+        auth_page = 8
+        AuthPage_start_byte = 136 + 40*auth_page
+        if valid_blocks.AuthValid[auth_page] == 1:
+            [AuthPage_8_AuthType] = struct.unpack('B', payload[AuthPage_start_byte + 4:AuthPage_start_byte + 5])
+            [AuthPage_8_DataPage] = struct.unpack('B', payload[AuthPage_start_byte + 0:AuthPage_start_byte + 1])
+            if AuthPage_0_Length > (auth_page*23 + 17) or AuthPage_0_Length == 0:
+                AuthPage_8_Data = payload[AuthPage_start_byte + 16:AuthPage_start_byte + 16 + 23].hex()
+            else:
+                AuthPage_8_Data = payload[AuthPage_start_byte + 16:AuthPage_start_byte + 16 + (AuthPage_0_Length - 17 - 23*(auth_page - 1))].hex()
+
+        auth_page = 9
+        AuthPage_start_byte = 136 + 40*auth_page
+        if valid_blocks.AuthValid[auth_page] == 1:
+            [AuthPage_9_AuthType] = struct.unpack('B', payload[AuthPage_start_byte + 4:AuthPage_start_byte + 5])
+            [AuthPage_9_DataPage] = struct.unpack('B', payload[AuthPage_start_byte + 0:AuthPage_start_byte + 1])
+            if AuthPage_0_Length > (auth_page*23 + 17) or AuthPage_0_Length == 0:
+                AuthPage_9_Data = payload[AuthPage_start_byte + 16:AuthPage_start_byte + 16 + 23].hex()
+            else:
+                AuthPage_9_Data = payload[AuthPage_start_byte + 16:AuthPage_start_byte + 16 + (AuthPage_0_Length - 17 - 23*(auth_page - 1))].hex()
+
+        auth_page = 10
+        AuthPage_start_byte = 136 + 40*auth_page
+        if valid_blocks.AuthValid[auth_page] == 1:
+            [AuthPage_10_AuthType] = struct.unpack('B', payload[AuthPage_start_byte + 4:AuthPage_start_byte + 5])
+            [AuthPage_10_DataPage] = struct.unpack('B', payload[AuthPage_start_byte + 0:AuthPage_start_byte + 1])
+            if AuthPage_0_Length > (auth_page*23 + 17) or AuthPage_0_Length == 0:
+                AuthPage_10_Data = payload[AuthPage_start_byte + 16:AuthPage_start_byte + 16 + 23].hex()
+            else:
+                AuthPage_10_Data = payload[AuthPage_start_byte + 16:AuthPage_start_byte + 16 + (AuthPage_0_Length - 17 - 23*(auth_page - 1))].hex()
+
+        auth_page = 11
+        AuthPage_start_byte = 136 + 40*auth_page
+        if valid_blocks.AuthValid[auth_page] == 1:
+            [AuthPage_11_AuthType] = struct.unpack('B', payload[AuthPage_start_byte + 4:AuthPage_start_byte + 5])
+            [AuthPage_11_DataPage] = struct.unpack('B', payload[AuthPage_start_byte + 0:AuthPage_start_byte + 1])
+            if AuthPage_0_Length > (auth_page*23 + 17) or AuthPage_0_Length == 0:
+                AuthPage_11_Data = payload[AuthPage_start_byte + 16:AuthPage_start_byte + 16 + 23].hex()
+            else:
+                AuthPage_11_Data = payload[AuthPage_start_byte + 16:AuthPage_start_byte + 16 + (AuthPage_0_Length - 17 - 23*(auth_page - 1))].hex()
+
+        auth_page = 12
+        AuthPage_start_byte = 136 + 40*auth_page
+        if valid_blocks.AuthValid[auth_page] == 1:
+            [AuthPage_12_AuthType] = struct.unpack('B', payload[AuthPage_start_byte + 4:AuthPage_start_byte + 5])
+            [AuthPage_12_DataPage] = struct.unpack('B', payload[AuthPage_start_byte + 0:AuthPage_start_byte + 1])
+            if AuthPage_0_Length > (auth_page*23 + 17) or AuthPage_0_Length == 0:
+                AuthPage_12_Data = payload[AuthPage_start_byte + 16:AuthPage_start_byte + 16 + 23].hex()
+            else:
+                AuthPage_12_Data = payload[AuthPage_start_byte + 16:AuthPage_start_byte + 16 + (AuthPage_0_Length - 17 - 23*(auth_page - 1))].hex()
+
+        auth_page = 13
+        AuthPage_start_byte = 136 + 40*auth_page
+        if valid_blocks.AuthValid[auth_page] == 1:
+            [AuthPage_13_AuthType] = struct.unpack('B', payload[AuthPage_start_byte + 4:AuthPage_start_byte + 5])
+            [AuthPage_13_DataPage] = struct.unpack('B', payload[AuthPage_start_byte + 0:AuthPage_start_byte + 1])
+            if AuthPage_0_Length > (auth_page*23 + 17) or AuthPage_0_Length == 0:
+                AuthPage_13_Data = payload[AuthPage_start_byte + 16:AuthPage_start_byte + 16 + 23].hex()
+            else:
+                AuthPage_13_Data = payload[AuthPage_start_byte + 16:AuthPage_start_byte + 16 + (AuthPage_0_Length - 17 - 23*(auth_page - 1))].hex()
+
         csv_writer.writerow([data_json.get('sensor ID'), data_json.get('RSSI'), data_json.get('channel'), data_json.get('timestamp'),
             epoch_timestamp.strftime('%Y-%m-%d %H:%M:%S.%f')[:-4], data_json.get('MAC address'), data_json.get('type'), str(BasicID_0), UAType_0, IDType_0, str(BasicID_1), UAType_1, IDType_1,
             LocationStatus, Direction, SpeedHorizontal, SpeedVertical, Latitude, Longitude, AltitudeBaro, AltitudeGeo, HeightType, Height, HorizAccuracy, VertAccuracy, BaroAccuracy, SpeedAccuracy, TSAccuracy, TimeStampLocation, LocationTimeStamp,
             DescType,str(Desc),
             OperatorLocationType, ClassificationType, OperatorLatitude, OperatorLongitude, AreaCount, AreaRadius, AreaCeiling, AreaFloor, CategoryEU, ClassEU, OperatorAltitudeGeo, TimestampSystem, str(SystemTimestamp),
-            OperatorIdType, OperatorId
+            OperatorIdType, OperatorId,
+            AuthPage_0_DataPage, AuthPage_0_AuthType, AuthPage_0_LastPageIndex, AuthPage_0_Length,AuthPage_0_Timestamp,AuthPage_0_Data,
+            AuthPage_1_DataPage, AuthPage_1_AuthType, AuthPage_1_Data,
+            AuthPage_2_DataPage, AuthPage_2_AuthType, AuthPage_2_Data,
+            AuthPage_3_DataPage, AuthPage_3_AuthType, AuthPage_3_Data,
+            AuthPage_4_DataPage, AuthPage_4_AuthType, AuthPage_4_Data,
+            AuthPage_5_DataPage, AuthPage_5_AuthType, AuthPage_5_Data,
+            AuthPage_6_DataPage, AuthPage_6_AuthType, AuthPage_6_Data,
+            AuthPage_7_DataPage, AuthPage_7_AuthType, AuthPage_7_Data,
+            AuthPage_8_DataPage, AuthPage_8_AuthType, AuthPage_8_Data,
+            AuthPage_9_DataPage, AuthPage_9_AuthType, AuthPage_9_Data,
+            AuthPage_10_DataPage, AuthPage_10_AuthType, AuthPage_10_Data,
+            AuthPage_11_DataPage, AuthPage_11_AuthType, AuthPage_11_Data,
+            AuthPage_12_DataPage, AuthPage_12_AuthType, AuthPage_12_Data,
+            AuthPage_13_DataPage, AuthPage_13_AuthType, AuthPage_13_Data
             ])
-
-

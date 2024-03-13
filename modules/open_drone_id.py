@@ -1,11 +1,28 @@
 from bitstruct import *
+import datetime
+import pytz
 
 def decode_valid_blocks(payload, valid_blocks):
 
     valid_blocks.BasicID0_valid = payload[892]
     valid_blocks.BasicID1_valid = payload[893]
     valid_blocks.LocationValid = payload[894]
-
+    valid_blocks.AuthValid[0] = payload[895]
+    valid_blocks.AuthValid[1] = payload[896]
+    valid_blocks.AuthValid[2] = payload[897]
+    valid_blocks.AuthValid[3] = payload[898]
+    valid_blocks.AuthValid[4] = payload[899]
+    valid_blocks.AuthValid[5] = payload[900]
+    valid_blocks.AuthValid[6] = payload[901]
+    valid_blocks.AuthValid[7] = payload[902]
+    valid_blocks.AuthValid[8] = payload[903]
+    valid_blocks.AuthValid[9] = payload[904]
+    valid_blocks.AuthValid[10] = payload[905]
+    valid_blocks.AuthValid[11] = payload[906]
+    valid_blocks.AuthValid[12] = payload[907]
+    valid_blocks.AuthValid[13] = payload[908]
+    valid_blocks.AuthValid[14] = payload[909]
+    valid_blocks.AuthValid[15] = payload[910]
     valid_blocks.SelfIDValid = payload[911]
     valid_blocks.SystemValid = payload[912]
     valid_blocks.OperatorIDValid = payload[913]
@@ -32,7 +49,9 @@ def print_payload(payload, valid_blocks):
 	if valid_blocks.OperatorIDValid == 1:
 		print_OperatorID(payload)
 
-
+	for x in range(16):
+		if valid_blocks.AuthValid[x] == 1:
+			print_AuthPage(payload, x)
 
 def print_basicID0(payload):
 
@@ -192,4 +211,40 @@ def print_OperatorID(payload):
 	[OperatorIdType] =  struct.unpack('i', payload[OperatorID_start_byte:OperatorID_start_byte + 4])
 	print("Operator ID Type......",  OperatorIdType)
 	print("Operator ID......",  payload[OperatorID_start_byte + 4:OperatorID_start_byte + 4 + 20].decode('ascii'))
+	print("")
+
+
+def print_AuthPage(payload, page):
+
+	AuthPage_start_byte = 136 + 40*page
+	print("Auth data")
+	[DataPage] = struct.unpack('B', payload[AuthPage_start_byte + 0:AuthPage_start_byte + 1])
+	[AuthType] = struct.unpack('B', payload[AuthPage_start_byte + 4:AuthPage_start_byte + 5])
+	print("Data Page.........",  DataPage)
+	print("Auth Type.........",  AuthType)
+
+	if page == 0:
+	    global LastPageIndex
+	    global Length
+	    [LastPageIndex] = struct.unpack('B', payload[AuthPage_start_byte + 8:AuthPage_start_byte + 9])
+	    [Length] = struct.unpack('B', payload[AuthPage_start_byte + 9:AuthPage_start_byte + 10])
+	    [Timestamp] =  struct.unpack('I', payload[AuthPage_start_byte + 12:AuthPage_start_byte + 12 + 4])
+
+	    print("Last Page Index...",  LastPageIndex)
+	    print("Length............",  Length)
+
+	    if Timestamp != float("NaN") and Timestamp != 0:
+	        print("Timestamp.........",  datetime.datetime.fromtimestamp((int(Timestamp) + 1546300800), pytz.UTC).strftime('%Y-%m-%d %H:%M %Z'))
+	    else:
+	        print("Timestamp.........invalid")
+
+	    AuthData = payload[AuthPage_start_byte + 16:AuthPage_start_byte + 16 + 17]
+	    print("Auth Data.........",AuthData.hex())
+	else:
+	    if page == LastPageIndex:
+	        #only print the chars within the specified length of the pages auth message
+	        AuthData = payload[AuthPage_start_byte + 16:AuthPage_start_byte + 16 + (Length - 17) % 23]
+	    else:
+	        AuthData = payload[AuthPage_start_byte + 16:AuthPage_start_byte + 16 + 23]
+	    print("Auth Data.........",AuthData.hex())
 	print("")

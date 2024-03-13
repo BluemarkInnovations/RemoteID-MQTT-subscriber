@@ -29,9 +29,10 @@ class open_drone_id_valid_blocks():
     SelfIDValid = 0
     SystemValid = 0
     OperatorIDValid = 0
+    AuthValid = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ] # max 13 pages up to 255 bytes data
 
 def connect_mqtt() -> mqtt_client:
-    if hasattr(mqtt_client, 'CallbackAPIVersion'):
+    if hasattr(mqtt_client, 'CallbackAPIVersion'): #Set API V1 if a new paho mqtt is installed. See https://eclipse.dev/paho/files/paho.mqtt.python/html/migrations.html
         client = mqtt_client.Client(mqtt_client.CallbackAPIVersion.VERSION1,config.client_id)
     else:
         client = mqtt_client.Client(config.client_id)
