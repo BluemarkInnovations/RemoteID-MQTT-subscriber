@@ -69,9 +69,10 @@ def connect_mqtt() -> mqtt_client:
 
 def subscribe(client: mqtt_client):
     def on_message(client, userdata, msg):
-        print(f"Received message from topic `{msg.topic}`")
+        if config.print_messages == True:
+            print(f"Received message from topic `{msg.topic}`")
         try:
-			#not compressed
+            #not compressed
             payload = msg.payload.decode()
             # remove newline (\n) char or \0 char as it will prevent decoding of json
             if ord(payload[-1:]) == 0 or ord(payload[-1:]) == 10:
@@ -100,15 +101,17 @@ def subscribe(client: mqtt_client):
                     try:
                         data_json = json_obj.get('data')
                         UASdata = base64.b64decode(data_json.get('UASdata'))
-                        print("data message")
-                        print("sensor ID......",  data_json.get('sensor ID'))
-                        print("RSSI......",  data_json.get('RSSI'))
-                        print("channel......",  data_json.get('channel'))
-                        print("timestamp......",  data_json.get('timestamp'))
-                        epoch_timestamp = datetime.datetime.fromtimestamp(data_json.get('timestamp')/1000, pytz.UTC)
-                        print("time (of timestamp)......",  epoch_timestamp.strftime('%Y-%m-%d %H:%M:%S.%f')[:-4])
-                        print("MAC address......",  data_json.get('MAC address'))
-                        print("type......",  data_json.get('type'))
+
+                        if config.print_messages == True:
+                            print("data message")
+                            print("sensor ID......",  data_json.get('sensor ID'))
+                            print("RSSI......",  data_json.get('RSSI'))
+                            print("channel......",  data_json.get('channel'))
+                            print("timestamp......",  data_json.get('timestamp'))
+                            epoch_timestamp = datetime.datetime.fromtimestamp(data_json.get('timestamp')/1000, pytz.UTC)
+                            print("time (of timestamp)......",  epoch_timestamp.strftime('%Y-%m-%d %H:%M:%S.%f')[:-4])
+                            print("MAC address......",  data_json.get('MAC address'))
+                            print("type......",  data_json.get('type'))
 
                         valid_open_drone_id_blocks = open_drone_id_valid_blocks()
                         open_drone_id.decode_valid_blocks(UASdata, valid_open_drone_id_blocks)
@@ -116,9 +119,8 @@ def subscribe(client: mqtt_client):
                         if hasattr(config, 'log_path'):
                             log_remote_id.write_csv(data_json,UASdata, valid_open_drone_id_blocks,filename)
 
-                        open_drone_id.print_payload(UASdata, valid_open_drone_id_blocks)
-
-
+                        if config.print_messages == True:
+                            open_drone_id.print_payload(UASdata, valid_open_drone_id_blocks)
 
                     except:
                         pass
@@ -126,15 +128,17 @@ def subscribe(client: mqtt_client):
                     try:
                         status_json = json_obj.get('status')
                         status_json.get('sensor ID') # fail if it is data json
-                        print("status message")
-                        print("sensor ID......",  status_json.get('sensor ID'))
-                        print("timestamp......",  status_json.get('timestamp'))
-                        epoch_timestamp = datetime.datetime.fromtimestamp(status_json.get('timestamp')/1000)
-                        print("time (local)......",  epoch_timestamp.strftime('%Y-%m-%d %H:%M:%S.%f')[:-3])
-                        print("firmware version......",  status_json.get('firmware version'))
-                        print("model......",  status_json.get('model'))
-                        print("status......",  status_json.get('status'))
-                        print("")
+
+                        if config.print_messages == True:
+                            print("status message")
+                            print("sensor ID......",  status_json.get('sensor ID'))
+                            print("timestamp......",  status_json.get('timestamp'))
+                            epoch_timestamp = datetime.datetime.fromtimestamp(status_json.get('timestamp')/1000)
+                            print("time (local)......",  epoch_timestamp.strftime('%Y-%m-%d %H:%M:%S.%f')[:-3])
+                            print("firmware version......",  status_json.get('firmware version'))
+                            print("model......",  status_json.get('model'))
+                            print("status......",  status_json.get('status'))
+                            print("")
                     except:
                         pass
             except:
@@ -144,6 +148,9 @@ def subscribe(client: mqtt_client):
     client.on_message = on_message
 
 def run():
+    if not hasattr(config, 'print_messages'):
+        config.print_messages = True
+
     if hasattr(config, 'log_path'):
         global filename
         filename = log_remote_id.open_csv(config.log_path)
