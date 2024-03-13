@@ -16,11 +16,13 @@ from bitstruct import *
 import lzma
 import datetime
 import pytz
+import threading
 
 import config # config.py with MQTT broker configuration
 
 from modules import open_drone_id
 from modules import log_remote_id
+from modules import tcp_sbs_export
 
 class open_drone_id_valid_blocks():
     BasicID0_valid = 0
@@ -122,6 +124,8 @@ def subscribe(client: mqtt_client):
                         if config.print_messages == True:
                             open_drone_id.print_payload(UASdata, valid_open_drone_id_blocks)
 
+                        tcp_sbs_export.export(UASdata, valid_open_drone_id_blocks)
+
                     except:
                         pass
 
@@ -154,6 +158,13 @@ def run():
     if hasattr(config, 'log_path'):
         global filename
         filename = log_remote_id.open_csv(config.log_path)
+
+    if hasattr(config, 'sbs_server_ip_address'): # only enable SBS export if relevant vars have been defined
+        if hasattr(config, 'sbs_server_port'):
+            print("SBS export thread started")
+            sbs_thread = threading.Thread(target=tcp_sbs_export.connect, args=(1,))
+            sbs_thread.daemon = True
+            sbs_thread.start()
 
     client = connect_mqtt()
     client.loop_forever()
