@@ -47,27 +47,33 @@ def write_csv(data_json, payload, valid_blocks, filename):
         epoch_timestamp = datetime.datetime.fromtimestamp(data_json.get('timestamp')/1000, pytz.UTC)
 
         BasicID0_start_byte = 0
-        [UAType_0] =  struct.unpack('i', payload[BasicID0_start_byte:BasicID0_start_byte + 4])
-        [IDType_0] =  struct.unpack('i', payload[BasicID0_start_byte + 4:BasicID0_start_byte + 4 + 4])
-        BasicID_0 = payload[BasicID0_start_byte + 8:BasicID0_start_byte+ 8 + 21].decode('ascii').rstrip('\x00')
+        [UAType_0] =  struct.unpack('I', payload[BasicID0_start_byte:BasicID0_start_byte + 4])
+        [IDType_0] =  struct.unpack('I', payload[BasicID0_start_byte + 4:BasicID0_start_byte + 4 + 4])
+        if IDType_0 == 1 or IDType_0 == 2:
+            BasicID_0 = payload[BasicID0_start_byte + 8:BasicID0_start_byte + 8 + 21].decode('ascii').rstrip('\x00')
+        else: #save as hex values
+            BasicID_0 = payload[BasicID0_start_byte + 8:BasicID0_start_byte + 8 + 21].hex()
 
         if valid_blocks.BasicID0_valid == 0:
-            UAType_0 = 0
-            IDType_0 = 0
+            UAType_0 = ''
+            IDType_0 = ''
             BasicID_0 = ''
 
         BasicID1_start_byte = 32
-        [UAType_1] =  struct.unpack('i', payload[BasicID1_start_byte:BasicID1_start_byte + 4])
-        [IDType_1] =  struct.unpack('i', payload[BasicID1_start_byte + 4:BasicID1_start_byte + 4 + 4])
-        BasicID_1 = payload[BasicID1_start_byte + 8:BasicID1_start_byte+ 8 + 21].decode('ascii').rstrip('\x00')
+        [UAType_1] =  struct.unpack('I', payload[BasicID1_start_byte:BasicID1_start_byte + 4])
+        [IDType_1] =  struct.unpack('I', payload[BasicID1_start_byte + 4:BasicID1_start_byte + 4 + 4])
+        if UAType_1 == 1 or UAType_1 == 2:
+            BasicID_1 = payload[BasicID1_start_byte + 8:BasicID1_start_byte + 8 + 21].decode('ascii').rstrip('\x00')
+        else: #save as hex values
+            BasicID_1 = payload[BasicID1_start_byte + 8:BasicID1_start_byte + 8 + 21].hex()
 
         if valid_blocks.BasicID1_valid == 0:
-            UAType_1 = 0
-            IDType_1 = 0
+            UAType_1 = ''
+            IDType_1 = ''
             BasicID_1 = ''
 
         Location_start_byte = 32 + 32
-        [LocationStatus] =  struct.unpack('i', payload[Location_start_byte:Location_start_byte + 4])
+        [LocationStatus] =  struct.unpack('I', payload[Location_start_byte:Location_start_byte + 4])
         [Direction] =  struct.unpack('f', payload[Location_start_byte + 4:Location_start_byte + 4 + 4])
         if Direction > 360 or Direction < 0:
             Direction = float("NaN")
@@ -92,42 +98,42 @@ def write_csv(data_json, payload, valid_blocks, filename):
         if AltitudeGeo <= -1000.0 or AltitudeGeo > 31767.5:
             AltitudeGeo = float("NaN")
 
-        [HeightType] =  struct.unpack('i', payload[Location_start_byte + 40:Location_start_byte + 40 + 4])
+        [HeightType] =  struct.unpack('I', payload[Location_start_byte + 40:Location_start_byte + 40 + 4])
         [Height] =  struct.unpack('f', payload[Location_start_byte + 44:Location_start_byte + 44 + 4])
         if Height <= -1000.0 or Height > 31767.5:
             Height = float("NaN")
 
-        [HorizAccuracy] =  struct.unpack('i', payload[Location_start_byte + 48:Location_start_byte + 48 + 4])
-        [VertAccuracy] =  struct.unpack('i', payload[Location_start_byte + 52:Location_start_byte + 52 + 4])
-        [BaroAccuracy] =  struct.unpack('i', payload[Location_start_byte + 56:Location_start_byte + 56 + 4])
-        [SpeedAccuracy] =  struct.unpack('i', payload[Location_start_byte + 60:Location_start_byte + 60 + 4])
-        [TSAccuracy] =  struct.unpack('i', payload[Location_start_byte + 64:Location_start_byte + 64 + 4])
+        [HorizAccuracy] =  struct.unpack('I', payload[Location_start_byte + 48:Location_start_byte + 48 + 4])
+        [VertAccuracy] =  struct.unpack('I', payload[Location_start_byte + 52:Location_start_byte + 52 + 4])
+        [BaroAccuracy] =  struct.unpack('I', payload[Location_start_byte + 56:Location_start_byte + 56 + 4])
+        [SpeedAccuracy] =  struct.unpack('I', payload[Location_start_byte + 60:Location_start_byte + 60 + 4])
+        [TSAccuracy] =  struct.unpack('I', payload[Location_start_byte + 64:Location_start_byte + 64 + 4])
         [TimeStampLocation] =  struct.unpack('f', payload[Location_start_byte + 68:Location_start_byte + 68 + 4])
         LocationTimeStamp = "invalid"
         if TimeStampLocation != float("NaN") and TimeStampLocation > 0 and TimeStampLocation <= 60*60:
             LocationTimeStamp = "%02i:%02i.%02i" % (int(TimeStampLocation/60), int(TimeStampLocation % 60), int(100*(TimeStampLocation - int(TimeStampLocation))))
 
         if valid_blocks.LocationValid == 0:
-            LocationStatus = 0
-            Direction = float("NaN")
-            SpeedHorizontal = float("NaN")
-            SpeedVertical = float("NaN")
-            Latitude = float("NaN")
-            Longitude = float("NaN")
-            AltitudeBaro = float("NaN")
-            AltitudeGeo = float("NaN")
-            HeightType = 0
-            Height = float("NaN")
-            HorizAccuracy = 0
-            VertAccuracy = 0
-            BaroAccuracy = 0
-            SpeedAccuracy = 0
-            TSAccuracy = 0
-            TimeStampLocation = 0
-            LocationTimeStamp  = "invalid"
+            LocationStatus = ''
+            Direction = ''
+            SpeedHorizontal = ''
+            SpeedVertical = ''
+            Latitude = ''
+            Longitude = ''
+            AltitudeBaro = ''
+            AltitudeGeo = ''
+            HeightType = ''
+            Height = ''
+            HorizAccuracy = ''
+            VertAccuracy = ''
+            BaroAccuracy = ''
+            SpeedAccuracy = ''
+            TSAccuracy = ''
+            TimeStampLocation = ''
+            LocationTimeStamp  = ''
 
         SelfID_start_byte = 776
-        [DescType] =  struct.unpack('i', payload[SelfID_start_byte:SelfID_start_byte + 4])
+        [DescType] =  struct.unpack('I', payload[SelfID_start_byte:SelfID_start_byte + 4])
         Desc = payload[SelfID_start_byte + 4:SelfID_start_byte + 4 + 23].decode('ascii').rstrip('\x00')
 
         if valid_blocks.SelfIDValid == 0:
@@ -135,8 +141,8 @@ def write_csv(data_json, payload, valid_blocks, filename):
             DescType = 0
 
         System_start_byte = 808
-        [OperatorLocationType] =  struct.unpack('i', payload[System_start_byte:System_start_byte + 4])
-        [ClassificationType] =  struct.unpack('i', payload[System_start_byte + 4:System_start_byte + 4+ 4])
+        [OperatorLocationType] =  struct.unpack('I', payload[System_start_byte:System_start_byte + 4])
+        [ClassificationType] =  struct.unpack('I', payload[System_start_byte + 4:System_start_byte + 4+ 4])
 
         [OperatorLatitude] =  struct.unpack('d', payload[System_start_byte + 8:System_start_byte + 8 + 8])
         [OperatorLongitude] = struct.unpack('d', payload[System_start_byte + 16:System_start_byte + 16 + 8])
@@ -154,8 +160,8 @@ def write_csv(data_json, payload, valid_blocks, filename):
         [AreaFloor] =  struct.unpack('f', payload[System_start_byte + 32:System_start_byte + 32 + 4])
         if AreaFloor == -1000:
             AreaFloor = float("NaN")
-        [CategoryEU] =  struct.unpack('i', payload[System_start_byte + 36:System_start_byte + 36 + 4])
-        [ClassEU] =  struct.unpack('i', payload[System_start_byte + 40:System_start_byte + 40 + 4])
+        [CategoryEU] =  struct.unpack('I', payload[System_start_byte + 36:System_start_byte + 36 + 4])
+        [ClassEU] =  struct.unpack('I', payload[System_start_byte + 40:System_start_byte + 40 + 4])
         [OperatorAltitudeGeo] =  struct.unpack('f', payload[System_start_byte + 44:System_start_byte + 44 + 4])
         if OperatorAltitudeGeo <= -1000.0 or OperatorAltitudeGeo > 31767.5:
             OperatorAltitudeGeo = float("NaN")
@@ -166,26 +172,26 @@ def write_csv(data_json, payload, valid_blocks, filename):
 
 
         if valid_blocks.SystemValid == 0:
-            OperatorLocationType = 0
-            ClassificationType = 0
-            OperatorLatitude = float("NaN")
-            OperatorLongitude = float("NaN")
-            AreaCount = 0
-            AreaRadius = 0
-            AreaCeiling = float("NaN")
-            AreaFloor = float("NaN")
-            OperatorAltitudeGeo = float("NaN")
-            CategoryEU = 0
-            ClassEU = 0
-            TimestampSystem = 0
-            SystemTimestamp  = "invalid"
+            OperatorLocationType = ''
+            ClassificationType = ''
+            OperatorLatitude = ''
+            OperatorLongitude = ''
+            AreaCount = ''
+            AreaRadius = ''
+            AreaCeiling = ''
+            AreaFloor = ''
+            OperatorAltitudeGeo = ''
+            CategoryEU = ''
+            ClassEU = ''
+            TimestampSystem = ''
+            SystemTimestamp  = ''
 
         OperatorID_start_byte = 864
-        [OperatorIdType] =  struct.unpack('i', payload[OperatorID_start_byte:OperatorID_start_byte + 4])
+        [OperatorIdType] =  struct.unpack('I', payload[OperatorID_start_byte:OperatorID_start_byte + 4])
         OperatorId = payload[OperatorID_start_byte + 4:OperatorID_start_byte + 4 + 20].decode('ascii').rstrip('\x00')
 
         if valid_blocks.OperatorIDValid == 0:
-            OperatorIdType = 0
+            OperatorIdType = ''
             OperatorId = ''
 
  #set to empty auth data first

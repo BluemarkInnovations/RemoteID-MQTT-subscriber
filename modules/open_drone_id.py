@@ -56,12 +56,16 @@ def print_payload(payload, valid_blocks):
 def print_basicID0(payload):
 
 	BasicID0_start_byte = 0
-	[UAType] =  struct.unpack('i', payload[BasicID0_start_byte:BasicID0_start_byte + 4])
-	[IDType] =  struct.unpack('i', payload[BasicID0_start_byte + 4:BasicID0_start_byte + 4 + 4])
+	[UAType] =  struct.unpack('I', payload[BasicID0_start_byte:BasicID0_start_byte + 4])
+	[IDType] =  struct.unpack('I', payload[BasicID0_start_byte + 4:BasicID0_start_byte + 4 + 4])
 	print("Basic ID 0 data")
 	print("UAType......",  UAType)
 	print("IDType......",  IDType)
-	print("Basic ID......",  payload[BasicID0_start_byte + 8:BasicID0_start_byte+ 8 + 21].decode('ascii'))
+	if IDType == 1 or IDType == 2:
+	    print("Basic ID......",  payload[BasicID0_start_byte + 8:BasicID0_start_byte + 8 + 21].decode('ascii'))
+	else:
+	    print("Basic ID......",  payload[BasicID0_start_byte + 8:BasicID0_start_byte+ 8 + 21].hex())
+
 	print("")
 
 
@@ -69,12 +73,16 @@ def print_basicID0(payload):
 def print_basicID1(payload):
 
 	BasicID1_start_byte = 32
-	[UAType] =  struct.unpack('i', payload[BasicID1_start_byte:BasicID1_start_byte + 4])
-	[IDType] =  struct.unpack('i', payload[BasicID1_start_byte + 4:BasicID1_start_byte + 4 + 4])
+	[UAType] =  struct.unpack('I', payload[BasicID1_start_byte:BasicID1_start_byte + 4])
+	[IDType] =  struct.unpack('I', payload[BasicID1_start_byte + 4:BasicID1_start_byte + 4 + 4])
 	print("Basic ID 1 data")
 	print("UAType......",  UAType)
 	print("IDType......",  IDType)
-	print("Basic ID......",  payload[BasicID1_start_byte + 8:BasicID1_start_byte+ 8 + 21].decode('ascii'))
+	if IDType == 1 or IDType == 2:
+	    print("Basic ID......",  payload[BasicID1_start_byte + 8:BasicID1_start_byte + 8 + 21].decode('ascii'))
+	else:
+	    print("Basic ID......",  payload[BasicID1_start_byte + 8:BasicID1_start_byte+ 8 + 21].hex())
+
 	print("")
 
 
@@ -83,7 +91,7 @@ def print_Location(payload):
 
 	Location_start_byte = 32 + 32
 	print("Location data")
-	[Status] =  struct.unpack('i', payload[Location_start_byte:Location_start_byte + 4])
+	[Status] =  struct.unpack('I', payload[Location_start_byte:Location_start_byte + 4])
 	print("Status......",  Status)
 	[Direction] =  struct.unpack('f', payload[Location_start_byte + 4:Location_start_byte + 4 + 4])
 	if Direction > 360 or Direction < 0:
@@ -114,17 +122,17 @@ def print_Location(payload):
 	    AltitudeGeo = float("NaN")
 	print("AltitudeBaro......",  AltitudeBaro)
 	print("AltitudeGeo......",  AltitudeGeo)
-	[HeightType] =  struct.unpack('i', payload[Location_start_byte + 40:Location_start_byte + 40 + 4])
+	[HeightType] =  struct.unpack('I ', payload[Location_start_byte + 40:Location_start_byte + 40 + 4])
 	[Height] =  struct.unpack('f', payload[Location_start_byte + 44:Location_start_byte + 44 + 4])
 	if Height <= -1000.0 or Height > 31767.5:
 	    Height = float("NaN")
 	print("HeightType......",  HeightType)
 	print("Height......",  Height)
-	[HorizAccuracy] =  struct.unpack('i', payload[Location_start_byte + 48:Location_start_byte + 48 + 4])
-	[VertAccuracy] =  struct.unpack('i', payload[Location_start_byte + 52:Location_start_byte + 52 + 4])
-	[BaroAccuracy] =  struct.unpack('i', payload[Location_start_byte + 56:Location_start_byte + 56 + 4])
-	[SpeedAccuracy] =  struct.unpack('i', payload[Location_start_byte + 60:Location_start_byte + 60 + 4])
-	[TSAccuracy] =  struct.unpack('i', payload[Location_start_byte + 64:Location_start_byte + 64 + 4])
+	[HorizAccuracy] =  struct.unpack('I', payload[Location_start_byte + 48:Location_start_byte + 48 + 4])
+	[VertAccuracy] =  struct.unpack('I', payload[Location_start_byte + 52:Location_start_byte + 52 + 4])
+	[BaroAccuracy] =  struct.unpack('I', payload[Location_start_byte + 56:Location_start_byte + 56 + 4])
+	[SpeedAccuracy] =  struct.unpack('I', payload[Location_start_byte + 60:Location_start_byte + 60 + 4])
+	[TSAccuracy] =  struct.unpack('I', payload[Location_start_byte + 64:Location_start_byte + 64 + 4])
 	[TimeStamp] =  struct.unpack('f', payload[Location_start_byte + 68:Location_start_byte + 68 + 4])
 
 	print("HorizAccuracy......",  HorizAccuracy)
@@ -144,7 +152,7 @@ def print_SelfID(payload):
 
 	print("Self ID data")
 	SelfID_start_byte = 776
-	[DescType] =  struct.unpack('i', payload[SelfID_start_byte:SelfID_start_byte + 4])
+	[DescType] =  struct.unpack('I', payload[SelfID_start_byte:SelfID_start_byte + 4])
 	Desc = payload[SelfID_start_byte + 4:SelfID_start_byte + 4 + 23]
 	print("Desc Type......",  DescType)
 	print("Desc......",  Desc.decode('ascii'))
@@ -156,8 +164,8 @@ def print_System(payload):
 
 	print("System data")
 	System_start_byte = 808
-	[OperatorLocationType] =  struct.unpack('i', payload[System_start_byte:System_start_byte + 4])
-	[ClassificationType] =  struct.unpack('i', payload[System_start_byte + 4:System_start_byte + 4+ 4])
+	[OperatorLocationType] =  struct.unpack('I', payload[System_start_byte:System_start_byte + 4])
+	[ClassificationType] =  struct.unpack('I', payload[System_start_byte + 4:System_start_byte + 4+ 4])
 
 	print("Operator Location Type......",  OperatorLocationType)
 	print("Classification Type......",  ClassificationType)
@@ -181,8 +189,8 @@ def print_System(payload):
 	[AreaFloor] =  struct.unpack('f', payload[System_start_byte + 32:System_start_byte + 32 + 4])
 	if AreaFloor == -1000:
 	    AreaFloor = float("NaN")
-	[CategoryEU] =  struct.unpack('i', payload[System_start_byte + 36:System_start_byte + 36 + 4])
-	[ClassEU] =  struct.unpack('i', payload[System_start_byte + 40:System_start_byte + 40 + 4])
+	[CategoryEU] =  struct.unpack('I', payload[System_start_byte + 36:System_start_byte + 36 + 4])
+	[ClassEU] =  struct.unpack('I', payload[System_start_byte + 40:System_start_byte + 40 + 4])
 	[OperatorAltitudeGeo] =  struct.unpack('f', payload[System_start_byte + 44:System_start_byte + 44 + 4])
 	if OperatorAltitudeGeo <= -1000.0 or OperatorAltitudeGeo > 31767.5:
 	    OperatorAltitudeGeo = float("NaN")
@@ -208,7 +216,7 @@ def print_OperatorID(payload):
 
 	OperatorID_start_byte = 864
 	print("Operator ID data")
-	[OperatorIdType] =  struct.unpack('i', payload[OperatorID_start_byte:OperatorID_start_byte + 4])
+	[OperatorIdType] =  struct.unpack('I', payload[OperatorID_start_byte:OperatorID_start_byte + 4])
 	print("Operator ID Type......",  OperatorIdType)
 	print("Operator ID......",  payload[OperatorID_start_byte + 4:OperatorID_start_byte + 4 + 20].decode('ascii'))
 	print("")
