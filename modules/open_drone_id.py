@@ -20,9 +20,9 @@ def decode_valid_blocks(payload, valid_blocks):
     valid_blocks.AuthValid[10] = payload[905]
     valid_blocks.AuthValid[11] = payload[906]
     valid_blocks.AuthValid[12] = payload[907]
-    valid_blocks.AuthValid[13] = payload[908]
-    valid_blocks.AuthValid[14] = payload[909]
-    valid_blocks.AuthValid[15] = payload[910]
+    valid_blocks.AuthValid[13] = payload[908] #The current RemoteID standards allow up to 13 pages of Auth data.
+    #valid_blocks.AuthValid[14] = payload[909]
+    #valid_blocks.AuthValid[15] = payload[910]
     valid_blocks.SelfIDValid = payload[911]
     valid_blocks.SystemValid = payload[912]
     valid_blocks.OperatorIDValid = payload[913]

@@ -31,8 +31,6 @@ def open_csv(log_path):
          + ['AuthPage_11_DataPage'] + ['AuthPage_11_AuthType'] + ['AuthPage_11_Data']
          + ['AuthPage_12_DataPage'] + ['AuthPage_12_AuthType'] + ['AuthPage_12_Data']
          + ['AuthPage_13_DataPage'] + ['AuthPage_13_AuthType'] + ['AuthPage_13_Data']
-         + ['AuthPage_14_DataPage'] + ['AuthPage_14_AuthType'] + ['AuthPage_14_Data']
-         + ['AuthPage_15_DataPage'] + ['AuthPage_15_AuthType'] + ['AuthPage_15_Data']
          )
 
     return filename
