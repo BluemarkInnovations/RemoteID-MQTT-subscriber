@@ -104,6 +104,11 @@ def subscribe(client: mqtt_client):
                         data_json = json_obj.get('data')
                         UASdata = base64.b64decode(data_json.get('UASdata'))
 
+                        try:
+                            raw = base64.b64decode(data_json.get('raw'))
+                        except:
+                            pass
+
                         if config.print_messages == True:
                             print("data message")
                             print("sensor ID......",  data_json.get('sensor ID'))
@@ -114,6 +119,10 @@ def subscribe(client: mqtt_client):
                             print("time (of timestamp)......",  epoch_timestamp.strftime('%Y-%m-%d %H:%M:%S.%f')[:-4])
                             print("MAC address......",  data_json.get('MAC address'))
                             print("type......",  data_json.get('type'))
+                            try:
+                                print("raw......",  raw.hex())
+                            except:
+                                pass
 
                         valid_open_drone_id_blocks = open_drone_id_valid_blocks()
                         open_drone_id.decode_valid_blocks(UASdata, valid_open_drone_id_blocks)

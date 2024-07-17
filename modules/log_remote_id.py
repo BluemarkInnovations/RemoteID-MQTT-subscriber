@@ -3,6 +3,7 @@ import datetime
 import json
 import pytz
 from bitstruct import *
+import base64
 
 def open_csv(log_path):
 
@@ -31,6 +32,7 @@ def open_csv(log_path):
          + ['AuthPage_11_DataPage'] + ['AuthPage_11_AuthType'] + ['AuthPage_11_Data']
          + ['AuthPage_12_DataPage'] + ['AuthPage_12_AuthType'] + ['AuthPage_12_Data']
          + ['AuthPage_13_DataPage'] + ['AuthPage_13_AuthType'] + ['AuthPage_13_Data']
+         + ['raw data']
          )
 
     return filename
@@ -382,6 +384,13 @@ def write_csv(data_json, payload, valid_blocks, filename):
                 AuthPage_13_Data = payload[AuthPage_start_byte + 16:AuthPage_start_byte + 16 + 23].hex()
             else:
                 AuthPage_13_Data = payload[AuthPage_start_byte + 16:AuthPage_start_byte + 16 + (AuthPage_0_Length - 17 - 23*(auth_page - 1))].hex()
+
+        raw = "".encode()
+
+        try:
+            raw = base64.b64decode(data_json.get('raw'))
+        except:
+            pass
 
         csv_writer.writerow([data_json.get('sensor ID'), data_json.get('RSSI'), data_json.get('channel'), data_json.get('timestamp'),
             epoch_timestamp.strftime('%Y-%m-%d %H:%M:%S.%f')[:-4], data_json.get('MAC address'), data_json.get('type'), str(BasicID_0), UAType_0, IDType_0, str(BasicID_1), UAType_1, IDType_1,
