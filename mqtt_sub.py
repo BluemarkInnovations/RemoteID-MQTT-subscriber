@@ -76,27 +76,37 @@ def subscribe(client: mqtt_client):
         try:
             #not compressed
             payload = msg.payload.decode()
+        except:
+            try:
+                #lzma compressed
+                payload = lzma.decompress(msg.payload).decode()
+            except:
+                payload = ''
+        if len(payload) > 0:
             # remove newline (\n) char or \0 char as it will prevent decoding of json
             if ord(payload[-1:]) == 0 or ord(payload[-1:]) == 10:
                 payload = payload[:-1]
-        except (UnicodeDecodeError, AttributeError):
-			#lzma compressed
-            payload = lzma.decompress(msg.payload).decode()
-            # remove \0 char as it will prevent decoding of json
-            if ord(payload[-1:]) == 0:
-                payload = payload[:-1]
+            position = 0
+        else:
+            position = -1
 
         #print(payload) #uncomment tp print raw payload
 
-        position = 0
         while position != -1:
             position = payload.find('}{')
             if position == -1:
-                json_obj = json.loads(payload)
+                try:
+                    json_obj = json.loads(payload)
+                except:
+                    json_obj = ''
             else:
                 message_payload = payload[0:position + 1]
                 payload = payload[position + 1:]
-                json_obj = json.loads(message_payload)
+                try:
+                    json_obj = json.loads(message_payload)
+                except:
+                    json_obj = ''
+                    pass
 
             try:
                 if json_obj.get('protocol') == 1.0:
@@ -128,12 +138,18 @@ def subscribe(client: mqtt_client):
                         open_drone_id.decode_valid_blocks(UASdata, valid_open_drone_id_blocks)
 
                         if hasattr(config, 'log_path'):
-                            log_remote_id.write_csv(data_json,UASdata, valid_open_drone_id_blocks,filename)
+                            if 'filename_rid' not in globals():
+                                global filename_rid
+                                filename_rid = log_remote_id.open_csv(config.log_path)
+                            log_remote_id.write_csv(data_json,UASdata, valid_open_drone_id_blocks,filename_rid)
 
                         if config.print_messages == True:
                             open_drone_id.print_payload(UASdata, valid_open_drone_id_blocks)
 
-                        tcp_sbs_export.export(UASdata, valid_open_drone_id_blocks)
+                        try:
+                            tcp_sbs_export.export(UASdata, valid_open_drone_id_blocks)
+                        except:
+                            pass
 
                     except:
                         pass
