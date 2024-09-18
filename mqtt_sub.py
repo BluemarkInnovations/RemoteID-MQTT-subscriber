@@ -164,10 +164,6 @@ def run():
     if not hasattr(config, 'print_messages'):
         config.print_messages = True
 
-    if hasattr(config, 'log_path'):
-        global filename
-        filename = log_remote_id.open_csv(config.log_path)
-
     if hasattr(config, 'sbs_server_ip_address'): # only enable SBS export if relevant vars have been defined
         if hasattr(config, 'sbs_server_port'):
             print("SBS export thread started")
