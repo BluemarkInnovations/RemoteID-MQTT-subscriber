@@ -148,7 +148,7 @@ def export(payload, valid_blocks):
 
                     if Status == 2: #air, send msg 4 also
                          output_str = str("MSG,4,,,")
-                         output_str += ICAO
+                         output_str += icao
                          output_str += str(",,,,,,,")
                          output_str += str(round(AltitudeGeo*3.28084))
                          output_str += str(",")
