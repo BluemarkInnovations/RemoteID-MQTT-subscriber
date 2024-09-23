@@ -119,21 +119,6 @@ def subscribe(client: mqtt_client):
                         except:
                             pass
 
-                        if config.print_messages == True:
-                            print("data message")
-                            print("sensor ID......",  data_json.get('sensor ID'))
-                            print("RSSI......",  data_json.get('RSSI'))
-                            print("channel......",  data_json.get('channel'))
-                            print("timestamp......",  data_json.get('timestamp'))
-                            epoch_timestamp = datetime.datetime.fromtimestamp(data_json.get('timestamp')/1000, pytz.UTC)
-                            print("time (of timestamp)......",  epoch_timestamp.strftime('%Y-%m-%d %H:%M:%S.%f')[:-4])
-                            print("MAC address......",  data_json.get('MAC address'))
-                            print("type......",  data_json.get('type'))
-                            try:
-                                print("raw......",  raw.hex())
-                            except:
-                                pass
-
                         valid_open_drone_id_blocks = open_drone_id_valid_blocks()
                         open_drone_id.decode_valid_blocks(UASdata, valid_open_drone_id_blocks)
 
@@ -144,7 +129,7 @@ def subscribe(client: mqtt_client):
                             log_remote_id.write_csv(data_json,UASdata, valid_open_drone_id_blocks,filename_rid)
 
                         if config.print_messages == True:
-                            open_drone_id.print_payload(UASdata, valid_open_drone_id_blocks)
+                            open_drone_id.print_payload(UASdata, valid_open_drone_id_blocks, data_json)
 
                         try:
                             tcp_sbs_export.export(UASdata, valid_open_drone_id_blocks)

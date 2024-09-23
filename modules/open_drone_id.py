@@ -29,7 +29,22 @@ def decode_valid_blocks(payload, valid_blocks):
 
 
 
-def print_payload(payload, valid_blocks):
+def print_payload(payload, valid_blocks, data_json):
+
+	print("data message")
+	print("sensor ID......",  data_json.get('sensor ID'))
+	print("RSSI......",  data_json.get('RSSI'))
+	print("channel......",  data_json.get('channel'))
+	print("timestamp......",  data_json.get('timestamp'))
+	epoch_timestamp = datetime.datetime.fromtimestamp(data_json.get('timestamp')/1000, pytz.UTC)
+	print("time (of timestamp)......",  epoch_timestamp.strftime('%Y-%m-%d %H:%M:%S.%f')[:-4])
+	print("MAC address......",  data_json.get('MAC address'))
+	print("type......",  data_json.get('type'))
+
+	try:
+		print("raw......",  raw.hex())
+	except:
+		pass
 
 	if valid_blocks.BasicID0_valid == 1:
 		print_basicID0(payload)
