@@ -23,6 +23,7 @@ import config # config.py with MQTT broker configuration
 from modules import open_drone_id
 from modules import log_remote_id
 from modules import tcp_sbs_export
+from modules import aircraft
 
 class open_drone_id_valid_blocks():
     BasicID0_valid = 0
@@ -135,9 +136,30 @@ def subscribe(client: mqtt_client):
                             tcp_sbs_export.export(UASdata, valid_open_drone_id_blocks)
                         except:
                             pass
-
                     except:
                         pass
+                        
+                    try:
+                        aircraft_json = json_obj.get('aircraft')
+                        if hasattr(config, 'log_path'):
+                            if 'filename_aircraft' not in globals():
+                                global filename_aircraft
+                                filename_aircraft = aircraft.open_csv(config.log_path)
+                            aircraft.write_csv(aircraft_json, filename_aircraft)
+
+                        aircraft.print_payload(aircraft_json,config)
+
+                        sbs_data = aircraft_json.get('SBS')
+                        if ord(sbs_data[-1:]) == 0 or ord(sbs_data[-1:]) == 10:
+                            sbs_data = sbs_data[:-1]
+                        SBS_split = sbs_data.split(";")
+                        for sbs_line in SBS_split:
+                            try:
+                                tcp_sbs_export.transmit(sbs_line + '\n')
+                            except:
+                                pass
+                    except:
+                        pass                        
 
                     try:
                         status_json = json_obj.get('status')
