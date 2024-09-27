@@ -155,6 +155,41 @@ def subscribe(client: mqtt_client):
                             print("")
                     except:
                         pass
+
+                    try:
+                        location_json = json_obj.get('location')
+                        location_json.get('sensor ID') # fail if it is data json
+                        if config.print_messages == True:
+                            print("location message")
+                            print("sensor ID............",  location_json.get('sensor ID'))
+                            print("timestamp............",  location_json.get('timestamp'))
+                            epoch_timestamp = datetime.datetime.fromtimestamp(location_json.get('timestamp')/1000)
+                            print("time (local).........",  epoch_timestamp.strftime('%Y-%m-%d %H:%M:%S.%f')[:-3])
+                            print("latitude.............",  location_json.get('latitude'))
+                            print("longitude............",  location_json.get('longitude'))
+                            print("altitude MSL [m].....",  location_json.get('altitude MSL'))
+                            print("")
+                    except:
+                        pass
+
+                    try:
+                        network_json = json_obj.get('mobile network')
+                        network_json.get('sensor ID') # fail if it is data json
+                        if config.print_messages == True:
+                            print("mobile network message")
+                            print("sensor ID............",  network_json.get('sensor ID'))
+                            print("timestamp............",  network_json.get('timestamp'))
+                            epoch_timestamp = datetime.datetime.fromtimestamp(network_json.get('timestamp')/1000)
+                            print("time (local).........",  epoch_timestamp.strftime('%Y-%m-%d %H:%M:%S.%f')[:-3])
+                            print("PLMN.................",  network_json.get('PLMN'))
+                            print("operator.............",  network_json.get('operator'))
+                            print("band.................",  network_json.get('band'))
+                            print("access technology....",  network_json.get('access technology'))
+                            print("RSSI.................",  network_json.get('RSSI'))
+                            print("BER..................",  network_json.get('BER'))
+                            print("")
+                    except:
+                        pass
             except:
                 pass
 
