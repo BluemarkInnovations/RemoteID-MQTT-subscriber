@@ -68,6 +68,19 @@ def print_payload(payload, valid_blocks, data_json):
 		if valid_blocks.AuthValid[x] == 1:
 			print_AuthPage(payload, x)
 
+
+
+#removes characters like \t \n \r space from string
+def clean_string(string):
+    string = string.replace(" ", "")
+    string = string.replace("\t", "")
+    string = string.replace("\n", "")
+    string = string.replace("\r", "")
+
+    return string
+
+
+
 def print_basicID0(payload):
 
 	BasicID0_start_byte = 0
@@ -77,7 +90,7 @@ def print_basicID0(payload):
 	print("UAType......",  UAType)
 	print("IDType......",  IDType)
 	if IDType == 1 or IDType == 2:
-	    print("Basic ID......",  payload[BasicID0_start_byte + 8:BasicID0_start_byte + 8 + 21].decode('ascii'))
+	    print("Basic ID......",  clean_string(payload[BasicID0_start_byte + 8:BasicID0_start_byte + 8 + 21].decode('ascii')))
 	else:
 	    print("Basic ID......",  payload[BasicID0_start_byte + 8:BasicID0_start_byte+ 8 + 21].hex())
 
@@ -94,7 +107,7 @@ def print_basicID1(payload):
 	print("UAType......",  UAType)
 	print("IDType......",  IDType)
 	if IDType == 1 or IDType == 2:
-	    print("Basic ID......",  payload[BasicID1_start_byte + 8:BasicID1_start_byte + 8 + 21].decode('ascii'))
+	    print("Basic ID......",  clean_string(payload[BasicID1_start_byte + 8:BasicID1_start_byte + 8 + 21].decode('ascii')))
 	else:
 	    print("Basic ID......",  payload[BasicID1_start_byte + 8:BasicID1_start_byte+ 8 + 21].hex())
 
