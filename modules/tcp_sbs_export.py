@@ -18,7 +18,7 @@ def ICAO(data):
     i = 0
     checksum1 = 0
     checksum2 = 0
-    
+
     data_hex = data.encode("utf-8").hex()
     while i < len(data_hex):
         checksum1 = checksum1 ^ ord(data_hex[i])
@@ -35,8 +35,8 @@ def callsign(data):
         callsign = str(data[0:4]) # call sign is manufacturer code
         callsign += str(data[-4:]) # last 4 digit SN
         callsign = callsign.ljust(8)
-    return callsign 
-                    
+    return callsign
+
 def transmit(data):
     try:
         sbs_connection.sendall(bytes(data,"ascii"))
@@ -47,7 +47,7 @@ def transmit(data):
         sbs_connection.setsockopt(socket.SOL_SOCKET, socket.SO_LINGER, struct.pack('ii', 1, 0))
         sbs_connection.close()
     return
-                        
+
 def export(payload, valid_blocks):
 
     try:
@@ -60,35 +60,35 @@ def export(payload, valid_blocks):
             #send MSG 1 identification
             output_str = ""
             output_str += str("MSG,1,,,")
-            
+
             BasicID0_start_byte = 0
             ID_length = 0
             [IDType] =  struct.unpack('i', payload[BasicID0_start_byte + 4:BasicID0_start_byte + 4 + 4])
-            
+
             if IDType == 1: #only include serial number type
                 basicID_data = str(payload[BasicID0_start_byte + 8:BasicID0_start_byte+ 8 + 21].decode('ascii'))
-                
+
                 i = 0
                 while i < len(basicID_data): #remove trailing data (zeroes)
                     if ord(basicID_data[i]) == 0:
                         ID_length = i
                         break
                     i += 1
-                basicID_data = basicID_data[0:ID_length] 
+                basicID_data = basicID_data[0:ID_length]
                 icao = ICAO(basicID_data)
 
                 # MSG 1 generation and transmit
                 output_str += icao
-                output_str += str(",,,,,,")                
+                output_str += str(",,,,,,")
                 output_str += callsign(basicID_data)
                 output_str += str(",,,,,,,,0,0,0,0\n")
-                
 
-                transmit(output_str) 
-                
+
+                transmit(output_str)
+
                 if valid_blocks.LocationValid == 1:
                     #MSG 2, 3, or 4 generation depending on in air or on ground status
-                    
+
                     Location_start_byte = 32 + 32
                     output_str = str("MSG,2,,,")
                     [Status] =  struct.unpack('i', payload[Location_start_byte:Location_start_byte + 4])
@@ -127,7 +127,7 @@ def export(payload, valid_blocks):
                     [SpeedHorizontal] =  struct.unpack('f', payload[Location_start_byte + 8:Location_start_byte + 8 + 4])
                     if SpeedHorizontal > 254.25 or SpeedHorizontal < 0:
                         SpeedHorizontal = 0.0
-                    
+
                     #for MSG 2 include these fields
                     if Status == 1: #ground
                         output_str += str(round(AltitudeGeo*3.28084))

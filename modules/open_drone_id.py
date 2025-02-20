@@ -1,6 +1,5 @@
 from bitstruct import *
-import datetime
-import pytz
+from datetime import datetime, timezone
 
 def decode_valid_blocks(payload, valid_blocks):
 
@@ -36,7 +35,7 @@ def print_payload(payload, valid_blocks, data_json, extra_json):
 	print("RSSI......",  data_json.get('RSSI'))
 	print("channel......",  data_json.get('channel'))
 	print("timestamp......",  data_json.get('timestamp'))
-	epoch_timestamp = datetime.datetime.fromtimestamp(data_json.get('timestamp')/1000, pytz.UTC)
+	epoch_timestamp = datetime.fromtimestamp(data_json.get('timestamp')/1000, tz=timezone.utc)
 	print("time (of timestamp)......",  epoch_timestamp.strftime('%Y-%m-%d %H:%M:%S.%f')[:-4])
 	print("MAC address......",  data_json.get('MAC address'))
 	print("type......",  data_json.get('type'))
@@ -243,7 +242,7 @@ def print_System(payload):
 	print("Operator Altitude Geo......",  OperatorAltitudeGeo)
 
 	if Timestamp != float("NaN") and Timestamp != 0:
-	    print("Timestamp......",  datetime.datetime.fromtimestamp((int(Timestamp) + 1546300800), pytz.UTC).strftime('%Y-%m-%d %H:%M %Z'))
+	    print("Timestamp......",  datetime.fromtimestamp((int(Timestamp) + 1546300800), tz=timezone.utc).strftime('%Y-%m-%d %H:%M %Z'))
 	else:
 	    print("Timestamp......invalid")
 	print("Timestamp raw......",  Timestamp)
@@ -281,7 +280,7 @@ def print_AuthPage(payload, page):
 	    print("Length............",  Length)
 
 	    if Timestamp != float("NaN") and Timestamp != 0:
-	        print("Timestamp.........",  datetime.datetime.fromtimestamp((int(Timestamp) + 1546300800), pytz.UTC).strftime('%Y-%m-%d %H:%M %Z'))
+	        print("Timestamp.........",  datetime.fromtimestamp((int(Timestamp) + 1546300800), tz=timezone.utc).strftime('%Y-%m-%d %H:%M %Z'))
 	    else:
 	        print("Timestamp.........invalid")
 

@@ -1,8 +1,7 @@
 import json
 import base64
 import csv
-import pytz
-import datetime
+from datetime import datetime, timezone
 from modules import tcp_sbs_export
 
 def decode_flight_state(state):
@@ -160,7 +159,7 @@ def print_payload(aircraft_json, config):
         print("Aircraft message")
         print("sensor ID............",  aircraft_json.get('sensor ID'))
         print("timestamp............",  aircraft_json.get('timestamp'))
-        epoch_timestamp = datetime.datetime.fromtimestamp(aircraft_json.get('timestamp')/1000)
+        epoch_timestamp = datetime.fromtimestamp(aircraft_json.get('timestamp')/1000, tz=timezone.utc)
         print("time (local).........",  epoch_timestamp.strftime('%Y-%m-%d %H:%M:%S.%f')[:-3])
         print("Frequency [MHz]......",  aircraft_json.get('frequency MHz'))
         print("type.................",  aircraft_json.get('type'))
@@ -200,7 +199,7 @@ def print_payload(aircraft_json, config):
 
 def open_csv(log_path):
 
-    filename = log_path + '/' + datetime.datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S') + '_aircraft_log.csv'
+    filename = log_path + '/' + datetime.now(tz=timezone.utc).strftime('%Y-%m-%d %H:%M:%S') + '_aircraft_log.csv'
     with open(filename, 'a', newline='', encoding='utf-8') as csvfile:
         csv_writer = csv.writer(csvfile, delimiter=',',
                                 quotechar='"', quoting=csv.QUOTE_NONNUMERIC)
@@ -219,7 +218,7 @@ def write_csv(data_json, filename):
         csv_writer = csv.writer(csvfile, delimiter=',',
                                 quotechar='"', quoting=csv.QUOTE_NONNUMERIC)
         #write row
-        epoch_timestamp = datetime.datetime.fromtimestamp(data_json.get('timestamp')/1000, pytz.UTC)
+        epoch_timestamp = datetime.fromtimestamp(data_json.get('timestamp')/1000, tz=timezone.utc)
 
         try:
              aircraft_data = base64.b64decode(data_json.get('raw'))

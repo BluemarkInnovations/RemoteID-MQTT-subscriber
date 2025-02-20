@@ -1,13 +1,12 @@
 import csv
-import datetime
+from datetime import datetime, timezone
 import json
-import pytz
 from bitstruct import *
 import base64
 
 def open_csv(log_path):
 
-    filename = log_path + '/' + datetime.datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S') + '_remoteID_log.csv'
+    filename = log_path + '/' + datetime.now(tz=timezone.utc).strftime('%Y-%m-%d %H:%M:%S') + '_remoteID_log.csv'
     with open(filename, 'a', newline='', encoding='utf-8') as csvfile:
         csv_writer = csv.writer(csvfile, delimiter=',',
                                 quotechar='"', quoting=csv.QUOTE_NONNUMERIC)
@@ -43,7 +42,7 @@ def write_csv(data_json, payload, valid_blocks, filename, extra_json):
         csv_writer = csv.writer(csvfile, delimiter=',',
                                 quotechar='"', quoting=csv.QUOTE_NONNUMERIC)
         #write row
-        epoch_timestamp = datetime.datetime.fromtimestamp(data_json.get('timestamp')/1000, pytz.UTC)
+        epoch_timestamp = datetime.fromtimestamp(data_json.get('timestamp')/1000, tz=timezone.utc)
 
         BasicID0_start_byte = 0
         [UAType_0] =  struct.unpack('I', payload[BasicID0_start_byte:BasicID0_start_byte + 4])
@@ -167,8 +166,7 @@ def write_csv(data_json, payload, valid_blocks, filename, extra_json):
         [TimestampSystem] =  struct.unpack('I', payload[System_start_byte + 48:System_start_byte + 48 + 4])
         SystemTimestamp = "invalid"
         if TimestampSystem != float("NaN") and TimestampSystem != 0:
-            SystemTimestamp = datetime.datetime.fromtimestamp((int(TimestampSystem) + 1546300800), pytz.UTC).strftime('%Y-%m-%d %H:%M %Z')
-
+            SystemTimestamp = datetime.fromtimestamp((int(TimestampSystem) + 1546300800), tz=timezone.utc).strftime('%Y-%m-%d %H:%M %Z')
 
         if valid_blocks.SystemValid == 0:
             OperatorLocationType = ''

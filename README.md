@@ -11,7 +11,13 @@ DroneScout receivers detect broadcast/direct drone Remote ID signals (Bluetooth,
 The code is Python3 code. It needs these dependencies (tested under Ubuntu):
 
 ```
-sudo pip3 install paho-mqtt bitstruct pytz
+sudo apt install python3-paho-mqtt python3-bitstruct
+ ```
+
+or use pip3 to install these dependencies
+
+```
+sudo pip3 install paho-mqtt bitstruct
 ```
 
 ## Configuration

@@ -14,8 +14,7 @@ import base64
 from paho.mqtt import client as mqtt_client
 from bitstruct import *
 import lzma
-import datetime
-import pytz
+from datetime import datetime, timezone
 import threading
 import sys
 
@@ -176,7 +175,7 @@ def subscribe(client: mqtt_client):
                             print("status message")
                             print("sensor ID......",  status_json.get('sensor ID'))
                             print("timestamp......",  status_json.get('timestamp'))
-                            epoch_timestamp = datetime.datetime.fromtimestamp(status_json.get('timestamp')/1000)
+                            epoch_timestamp = datetime.fromtimestamp(status_json.get('timestamp')/1000, tz=timezone.utc)
                             print("time (local)......",  epoch_timestamp.strftime('%Y-%m-%d %H:%M:%S.%f')[:-3])
                             print("firmware version......",  status_json.get('firmware version'))
                             print("model......",  status_json.get('model'))
@@ -192,7 +191,7 @@ def subscribe(client: mqtt_client):
                             print("location message")
                             print("sensor ID............",  location_json.get('sensor ID'))
                             print("timestamp............",  location_json.get('timestamp'))
-                            epoch_timestamp = datetime.datetime.fromtimestamp(location_json.get('timestamp')/1000)
+                            epoch_timestamp = datetime.fromtimestamp(location_json.get('timestamp')/1000, tz=timezone.utc)
                             print("time (local).........",  epoch_timestamp.strftime('%Y-%m-%d %H:%M:%S.%f')[:-3])
                             print("latitude.............",  location_json.get('latitude'))
                             print("longitude............",  location_json.get('longitude'))
@@ -208,7 +207,7 @@ def subscribe(client: mqtt_client):
                             print("mobile network message")
                             print("sensor ID............",  network_json.get('sensor ID'))
                             print("timestamp............",  network_json.get('timestamp'))
-                            epoch_timestamp = datetime.datetime.fromtimestamp(network_json.get('timestamp')/1000)
+                            epoch_timestamp = datetime.fromtimestamp(network_json.get('timestamp')/1000, tz=timezone.utc)
                             print("time (local).........",  epoch_timestamp.strftime('%Y-%m-%d %H:%M:%S.%f')[:-3])
                             print("PLMN.................",  network_json.get('PLMN'))
                             print("operator.............",  network_json.get('operator'))
