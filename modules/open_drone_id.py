@@ -29,7 +29,7 @@ def decode_valid_blocks(payload, valid_blocks):
 
 
 
-def print_payload(payload, valid_blocks, data_json):
+def print_payload(payload, valid_blocks, data_json, extra_json):
 
 	print("data message")
 	print("sensor ID......",  data_json.get('sensor ID'))
@@ -68,6 +68,17 @@ def print_payload(payload, valid_blocks, data_json):
 		if valid_blocks.AuthValid[x] == 1:
 			print_AuthPage(payload, x)
 
+	if len(extra_json) > 0:
+		if extra_json.get('SN present') == 1:
+			print("extra")
+			print("SN valid......",  extra_json.get('SN valid'))
+			print("manufacturer......",  extra_json.get('manufacturer'))
+			print("model......",  extra_json.get('model'))
+			print("type......",  extra_json.get('type'))
+			print("application......",  extra_json.get('application'))
+			print("weight mtow [kg]......",  extra_json.get('weight'))
+			print("dimensions [mm]......",  extra_json.get('dimensions'))
+			print("")
 
 
 #removes characters like \t \n \r space from string

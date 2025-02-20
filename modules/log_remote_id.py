@@ -32,13 +32,12 @@ def open_csv(log_path):
          + ['AuthPage_11_DataPage'] + ['AuthPage_11_AuthType'] + ['AuthPage_11_Data']
          + ['AuthPage_12_DataPage'] + ['AuthPage_12_AuthType'] + ['AuthPage_12_Data']
          + ['AuthPage_13_DataPage'] + ['AuthPage_13_AuthType'] + ['AuthPage_13_Data']
-         + ['raw data']
+         + ['raw data'] + ['SN valid'] + ['manufacturer'] + ['model'] + ['type'] + ['application'] + ['weight mtow [kg]'] + ['dimensions [mm]']
          )
-
     return filename
 
 
-def write_csv(data_json, payload, valid_blocks, filename):
+def write_csv(data_json, payload, valid_blocks, filename, extra_json):
 
     with open(filename, 'a', newline='', encoding='utf-8') as csvfile:
         csv_writer = csv.writer(csvfile, delimiter=',',
@@ -389,6 +388,8 @@ def write_csv(data_json, payload, valid_blocks, filename):
 
         try:
             raw = base64.b64decode(data_json.get('raw'))
+            if ord(raw[-1:]) == 0 or ord(raw[-1:]) == 10:
+                raw = raw[:-1]
         except:
             pass
 
@@ -411,5 +412,7 @@ def write_csv(data_json, payload, valid_blocks, filename):
             AuthPage_10_DataPage, AuthPage_10_AuthType, AuthPage_10_Data,
             AuthPage_11_DataPage, AuthPage_11_AuthType, AuthPage_11_Data,
             AuthPage_12_DataPage, AuthPage_12_AuthType, AuthPage_12_Data,
-            AuthPage_13_DataPage, AuthPage_13_AuthType, AuthPage_13_Data
+            AuthPage_13_DataPage, AuthPage_13_AuthType, AuthPage_13_Data,
+            raw.hex(), extra_json.get('SN valid'), extra_json.get('manufacturer'),extra_json.get('model'),
+            extra_json.get('type'),extra_json.get('application'),extra_json.get('weight'),extra_json.get('dimensions')
             ])

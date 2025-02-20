@@ -17,6 +17,7 @@ import lzma
 import datetime
 import pytz
 import threading
+import sys
 
 import config # config.py with MQTT broker configuration
 
@@ -113,39 +114,45 @@ def subscribe(client: mqtt_client):
                 if json_obj.get('protocol') == 1.0:
                     try:
                         data_json = json_obj.get('data')
-                        UASdata = base64.b64decode(data_json.get('UASdata'))
+                        if (sys.getsizeof(data_json) > 16): #json exists if larger as 16 bytes
+                            UASdata = base64.b64decode(data_json.get('UASdata'))
 
-                        try:
-                            raw = base64.b64decode(data_json.get('raw'))
-                        except:
-                            pass
+                            try:
+                                raw = base64.b64decode(data_json.get('raw'))
+                            except:
+                                pass
 
-                        valid_open_drone_id_blocks = open_drone_id_valid_blocks()
-                        open_drone_id.decode_valid_blocks(UASdata, valid_open_drone_id_blocks)
+                            valid_open_drone_id_blocks = open_drone_id_valid_blocks()
+                            open_drone_id.decode_valid_blocks(UASdata, valid_open_drone_id_blocks)
+                            try:
+                                extra_json = data_json.get('extra')
+                            except:
+                                extra_json = ""
 
-                        if hasattr(config, 'log_path'):
-                            if 'filename_rid' not in globals():
-                                global filename_rid
-                                filename_rid = log_remote_id.open_csv(config.log_path)
-                            log_remote_id.write_csv(data_json,UASdata, valid_open_drone_id_blocks,filename_rid)
+                            if hasattr(config, 'log_path'):
+                                if 'filename_rid' not in globals():
+                                    global filename_rid
+                                    filename_rid = log_remote_id.open_csv(config.log_path)
+                                log_remote_id.write_csv(data_json,UASdata, valid_open_drone_id_blocks,filename_rid,extra_json)
 
-                        if config.print_messages == True:
-                            open_drone_id.print_payload(UASdata, valid_open_drone_id_blocks, data_json)
+                            if config.print_messages == True:
+                                open_drone_id.print_payload(UASdata, valid_open_drone_id_blocks, data_json, extra_json)
 
-                        try:
-                            tcp_sbs_export.export(UASdata, valid_open_drone_id_blocks)
-                        except:
-                            pass
+                            try:
+                                tcp_sbs_export.export(UASdata, valid_open_drone_id_blocks)
+                            except:
+                                pass
                     except:
                         pass
-                        
+
                     try:
                         aircraft_json = json_obj.get('aircraft')
-                        if hasattr(config, 'log_path'):
-                            if 'filename_aircraft' not in globals():
-                                global filename_aircraft
-                                filename_aircraft = aircraft.open_csv(config.log_path)
-                            aircraft.write_csv(aircraft_json, filename_aircraft)
+                        if (sys.getsizeof(aircraft_json) > 16): #json exists if larger as 16 bytes
+                            if hasattr(config, 'log_path'):
+                                if 'filename_aircraft' not in globals():
+                                    global filename_aircraft
+                                    filename_aircraft = aircraft.open_csv(config.log_path)
+                                aircraft.write_csv(aircraft_json, filename_aircraft)
 
                         aircraft.print_payload(aircraft_json,config)
 
@@ -159,7 +166,7 @@ def subscribe(client: mqtt_client):
                             except:
                                 pass
                     except:
-                        pass                        
+                        pass
 
                     try:
                         status_json = json_obj.get('status')
