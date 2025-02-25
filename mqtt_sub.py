@@ -126,7 +126,7 @@ def subscribe(client: mqtt_client):
                             try:
                                 extra_json = data_json.get('extra')
                             except:
-                                extra_json = ""
+                                extra_json = ''
 
                             if hasattr(config, 'log_path'):
                                 if 'filename_rid' not in globals():

@@ -391,6 +391,28 @@ def write_csv(data_json, payload, valid_blocks, filename, extra_json):
         except:
             pass
 
+        SN_valid = ''
+        manufacturer = ''
+        model = ''
+        uas_type = ''
+        application = ''
+        weight = ''
+        dimensions = ''
+
+        try:
+            if len(extra_json) > 0:
+                if extra_json.get('SN present') == 1:
+                    SN_valid = extra_json.get('SN valid')
+                    manufacturer = extra_json.get('manufacturer')
+                    model = extra_json.get('model')
+                    uas_type = extra_json.get('type')
+                    application = extra_json.get('application')
+                    weight = extra_json.get('weight')
+                    dimensions = extra_json.get('dimensions')
+        except:
+            pass
+
+
         csv_writer.writerow([data_json.get('sensor ID'), data_json.get('RSSI'), data_json.get('channel'), data_json.get('timestamp'),
             epoch_timestamp.strftime('%Y-%m-%d %H:%M:%S.%f')[:-4], data_json.get('MAC address'), data_json.get('type'), str(BasicID_0), UAType_0, IDType_0, str(BasicID_1), UAType_1, IDType_1,
             LocationStatus, Direction, SpeedHorizontal, SpeedVertical, Latitude, Longitude, AltitudeBaro, AltitudeGeo, HeightType, Height, HorizAccuracy, VertAccuracy, BaroAccuracy, SpeedAccuracy, TSAccuracy, TimeStampLocation, LocationTimeStamp,
@@ -411,6 +433,6 @@ def write_csv(data_json, payload, valid_blocks, filename, extra_json):
             AuthPage_11_DataPage, AuthPage_11_AuthType, AuthPage_11_Data,
             AuthPage_12_DataPage, AuthPage_12_AuthType, AuthPage_12_Data,
             AuthPage_13_DataPage, AuthPage_13_AuthType, AuthPage_13_Data,
-            raw.hex(), extra_json.get('SN valid'), extra_json.get('manufacturer'),extra_json.get('model'),
-            extra_json.get('type'),extra_json.get('application'),extra_json.get('weight'),extra_json.get('dimensions')
+            raw.hex(), SN_valid, manufacturer,model,
+            uas_type,application,weight,dimensions
             ])
