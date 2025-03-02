@@ -98,8 +98,8 @@ def print_basicID0(payload):
 	[UAType] =  struct.unpack('I', payload[BasicID0_start_byte:BasicID0_start_byte + 4])
 	[IDType] =  struct.unpack('I', payload[BasicID0_start_byte + 4:BasicID0_start_byte + 4 + 4])
 	print("Basic ID 0 data")
-	print("UAType......",  UAType)
-	print("IDType......",  IDType)
+	print("UAType......",  decode_basicID_UA_type(UAType))
+	print("IDType......",  decode_basicID_ID_type(IDType))
 	if IDType == 1 or IDType == 2:
 	    print("Basic ID......",  clean_string(payload[BasicID0_start_byte + 8:BasicID0_start_byte + 8 + 21].decode('ascii')))
 	else:
@@ -115,8 +115,8 @@ def print_basicID1(payload):
 	[UAType] =  struct.unpack('I', payload[BasicID1_start_byte:BasicID1_start_byte + 4])
 	[IDType] =  struct.unpack('I', payload[BasicID1_start_byte + 4:BasicID1_start_byte + 4 + 4])
 	print("Basic ID 1 data")
-	print("UAType......",  UAType)
-	print("IDType......",  IDType)
+	print("UAType......",  decode_basicID_UA_type(UAType))
+	print("IDType......",  decode_basicID_ID_type(IDType))
 	if IDType == 1 or IDType == 2:
 	    print("Basic ID......",  clean_string(payload[BasicID1_start_byte + 8:BasicID1_start_byte + 8 + 21].decode('ascii')))
 	else:
@@ -131,7 +131,7 @@ def print_Location(payload):
 	Location_start_byte = 32 + 32
 	print("Location data")
 	[Status] =  struct.unpack('I', payload[Location_start_byte:Location_start_byte + 4])
-	print("Status......",  Status)
+	print("Status......",  decode_location_status(Status))
 	[Direction] =  struct.unpack('f', payload[Location_start_byte + 4:Location_start_byte + 4 + 4])
 	if Direction > 360 or Direction < 0:
 	    Direction = float("NaN")
@@ -165,7 +165,7 @@ def print_Location(payload):
 	[Height] =  struct.unpack('f', payload[Location_start_byte + 44:Location_start_byte + 44 + 4])
 	if Height <= -1000.0 or Height > 31767.5:
 	    Height = float("NaN")
-	print("HeightType......",  HeightType)
+	print("HeightType......",  decode_location_height_type(HeightType))
 	print("Height......",  Height)
 	[HorizAccuracy] =  struct.unpack('I', payload[Location_start_byte + 48:Location_start_byte + 48 + 4])
 	[VertAccuracy] =  struct.unpack('I', payload[Location_start_byte + 52:Location_start_byte + 52 + 4])
@@ -193,7 +193,7 @@ def print_SelfID(payload):
 	SelfID_start_byte = 776
 	[DescType] =  struct.unpack('I', payload[SelfID_start_byte:SelfID_start_byte + 4])
 	Desc = payload[SelfID_start_byte + 4:SelfID_start_byte + 4 + 23]
-	print("Desc Type......",  DescType)
+	print("Desc Type......",  decode_selfID_type(DescType))
 	print("Desc......",  Desc.decode('ascii'))
 	print("")
 
@@ -206,8 +206,8 @@ def print_System(payload):
 	[OperatorLocationType] =  struct.unpack('I', payload[System_start_byte:System_start_byte + 4])
 	[ClassificationType] =  struct.unpack('I', payload[System_start_byte + 4:System_start_byte + 4+ 4])
 
-	print("Operator Location Type......",  OperatorLocationType)
-	print("Classification Type......",  ClassificationType)
+	print("Operator Location Type......",  decode_system_operator_location_type(OperatorLocationType))
+	print("Classification Type......",  decode_system_classification_type(ClassificationType))
 
 	[OperatorLatitude] =  struct.unpack('d', payload[System_start_byte + 8:System_start_byte + 8 + 8])
 	[OperatorLongitude] = struct.unpack('d', payload[System_start_byte + 16:System_start_byte + 16 + 8])
@@ -238,8 +238,8 @@ def print_System(payload):
 	print("Area Radius......",  AreaRadius)
 	print("Area Ceiling......",  AreaCeiling)
 	print("Area Floor......",  AreaFloor)
-	print("Category EU......",  CategoryEU)
-	print("Class EU......",  ClassEU)
+	print("Category EU......",  decode_system_ua_category(CategoryEU))
+	print("Class EU......",  decode_system_ua_class(ClassEU))
 	print("Operator Altitude Geo......",  OperatorAltitudeGeo)
 
 	if Timestamp != float("NaN") and Timestamp != 0:
@@ -256,7 +256,7 @@ def print_OperatorID(payload):
 	OperatorID_start_byte = 864
 	print("Operator ID data")
 	[OperatorIdType] =  struct.unpack('I', payload[OperatorID_start_byte:OperatorID_start_byte + 4])
-	print("Operator ID Type......",  OperatorIdType)
+	print("Operator ID Type......",  decode_operatorID_type(OperatorIdType))
 	print("Operator ID......",  payload[OperatorID_start_byte + 4:OperatorID_start_byte + 4 + 20].decode('ascii'))
 	print("")
 
@@ -295,3 +295,162 @@ def print_AuthPage(payload, page):
 	        AuthData = payload[AuthPage_start_byte + 16:AuthPage_start_byte + 16 + 23]
 	    print("Auth Data.........",AuthData.hex())
 	print("")
+
+
+
+def decode_basicID_ID_type(IDType):
+    string = ""
+    if IDType == 0:
+        string = "None"
+    elif IDType == 1:
+        string = "Serial Number"
+    elif IDType == 2:
+        string = "CAA Registration ID"
+    elif IDType == 3:
+        string = "UTM Assigned UUID"
+    elif IDType == 4:
+        string = "specific session ID"
+
+    return string
+
+def decode_basicID_UA_type(UAType):
+    string = ""
+    if UAType == 0:
+        string = "None"
+    elif UAType == 1:
+        string = "Aeroplane"
+    elif UAType == 2:
+        string = "Helicopter (or Multirotor)"
+    elif UAType == 3:
+        string = "Gyroplane"
+    elif UAType == 4:
+        string = "Hybrid Lift"
+    elif UAType == 5:
+        string = "Ornithopter"
+    elif UAType == 6:
+        string = "Glider"
+    elif UAType == 7:
+        string = "Kite"
+    elif UAType == 8:
+        string = "Free Balloon"
+    elif UAType == 9:
+        string = "Captive Balloon"
+    elif UAType == 10:
+        string = "Airship (such as a blimp)"
+    elif UAType == 11:
+        string = "Free Fall/Parachute (unpowered)"
+    elif UAType == 12:
+        string = "Rocket"
+    elif UAType == 13:
+        string = "Tethered Powered Aircraft"
+    elif UAType == 14:
+        string = "Ground Obstacle"
+    elif UAType == 15:
+        string = "Other"
+
+    return string
+
+def decode_location_status(status):
+    string = ""
+    if status == 0:
+        string = "Undeclared"
+    elif status == 1:
+        string = "Ground"
+    elif status == 2:
+        string = "Airborne"
+    elif status == 3:
+        string = "Emergency"
+    elif status == 4:
+        string = "Remote ID System Failure"
+
+    return string
+
+def location_decode_speed_horizontal(speed_enc, speed_mult):
+    if speed_enc == 255:
+	    return float('NaN')
+    speed_enc = float (speed_enc)
+    if speed_mult == 1:
+        return float ((float(speed_enc) * 0.75) + (255 * 0.25))
+    else:
+        return speed_enc * 0.75
+
+def decode_system_ua_category(ua_category):
+    string = ""
+    if ua_category == 0:
+        string = "Undefined"
+    elif ua_category == 1:
+        string = "Open"
+    elif ua_category == 2:
+        string = "Specific"
+    elif ua_category == 3:
+        string = "Certified"
+
+    return string
+
+def decode_system_ua_class(ua_class):
+    string = ""
+    if ua_class == 0:
+        string = "Undefined"
+    elif ua_class == 1:
+        string = "Class 0"
+    elif ua_class == 2:
+        string = "Class 1"
+    elif ua_class == 3:
+        string = "Class 2"
+    elif ua_class == 4:
+        string = "Class 3"
+    elif ua_class == 5:
+        string = "Class 4"
+    elif ua_class == 6:
+        string = "Class 5"
+    elif ua_class == 7:
+        string = "Class 6"
+
+    return string
+
+def decode_system_operator_location_type(operator_location_type):
+    string = ""
+    if operator_location_type == 0:
+        string = "Take Off"
+    elif operator_location_type == 1:
+        string = "Dynamic"
+    elif operator_location_type == 2:
+        string = "Fixed"
+
+    return string
+
+def decode_system_classification_type(system_classification_type):
+    string = ""
+    if system_classification_type == 0:
+        string = "Undeclared"
+    elif system_classification_type == 1:
+        string = "European Union"
+
+    return string
+
+def decode_location_height_type(height_type):
+    string = ""
+    if height_type == 0:
+        string = "Above Takeoff"
+    elif height_type == 1:
+        string = "Above Ground Level"
+
+    return string
+
+def decode_selfID_type(selfID_type):
+    string = ""
+    if selfID_type == 0:
+        string = "Text"
+    elif selfID_type == 1:
+        string = "Emergency"
+    elif selfID_type == 2:
+        string = "Extended Status"
+
+    return string
+
+def decode_operatorID_type(operatorID_type):
+    string = ""
+    if operatorID_type == 0:
+        string = "Operator ID"
+
+    return string
