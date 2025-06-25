@@ -196,6 +196,8 @@ def subscribe(client: mqtt_client):
                             print("latitude.............",  location_json.get('latitude'))
                             print("longitude............",  location_json.get('longitude'))
                             print("altitude MSL [m].....",  location_json.get('altitude MSL'))
+                            print("number of satellites.",  location_json.get('satellites'))
+                            print("HDOP.................",  location_json.get('HDOP'))
                             print("")
                     except:
                         pass
