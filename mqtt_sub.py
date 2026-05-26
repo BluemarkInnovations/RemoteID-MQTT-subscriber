@@ -125,8 +125,10 @@ def subscribe(client: mqtt_client):
                             open_drone_id.decode_valid_blocks(UASdata, valid_open_drone_id_blocks)
                             try:
                                 extra_json = data_json.get('extra')
+                                if extra_json is None:
+                                    extra_json = {}
                             except:
-                                extra_json = ''
+                                extra_json = {}
 
                             if hasattr(config, 'log_path'):
                                 if 'filename_rid' not in globals():
