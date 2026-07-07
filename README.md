@@ -5,25 +5,27 @@ This repository contains reference code to subscribe to a MQTT broker and parse 
 
 DroneScout receivers detect broadcast/direct drone Remote ID signals (Bluetooth, WLAN); a <em>"wireless number plate"</em> technology that is or becomes mandatory in several parts of the world e.g. USA, EU, Japan. It supports all frequency bands (2.4 and 5 GHz) and transmission protocols (WLAN Beacon, WLAN NaN, Bluetooth 4 Legacy, Bluetooth 5 Long Range.)
 
-\#RemoteID \#FAA \#F3411 \#dronetechnology \#DIN_EN_4709-002
+\#OpenDroneID \#RemoteID \#FAA \#F3411 \#EASA \#DIN_EN_4709-002 \#dronetechnology
 
 ## Installation
-The code is Python3 code. It needs these dependencies (tested under Ubuntu):
+The code is Python3 (3.6+) code. It needs these dependencies (tested under Ubuntu):
 
 ```
 sudo apt install python3-paho-mqtt python3-bitstruct
  ```
 
-or use pip3 to install these dependencies
+or use pip3 to install these dependencies from `requirements.txt`
 
 ```
-sudo pip3 install paho-mqtt bitstruct
+pip3 install -r requirements.txt
 ```
+
+Avoid `sudo pip3 install`, as it installs into the system Python and can conflict with packages managed by apt. If you're not using a virtual environment and need a system-wide install, prefer `pip3 install --user -r requirements.txt`.
 
 ## Configuration
 DroneScout receivers output data using [MQTT](https://en.wikipedia.org/wiki/MQTT). MQTT is a sensor protocol that consists of publishers, subscribers and a broker. DroneScout receivers are a MQTT publisher. You need a MQTT broker where the sensors output their sensor data. This script is a MQTT subscriber.
 
-In the config.py file, enter the correct settings for the ``broker``, ``port``. Leave the ``topic`` to "#" to recieve messages from all topics. Also add an ``username`` and ``password`` if your MQTT broker needs it.
+In the config.py file, enter the correct settings for the ``broker``, ``port``. Leave the ``topic`` to "#" to receive messages from all topics. Also add an ``username`` and ``password`` if your MQTT broker needs it. Note that `config.py` ships with a placeholder `broker = 'myserver'` — the script will not connect to anything until you replace it with your actual MQTT broker address.
 
 It is also strongly advised to use secure SSL connection to the MQTT broker (``port`` 8883). For that also set the client_pem file. In case of non-SSL connections, use the ``port`` 1883.
 
@@ -55,3 +57,14 @@ Note: for exporting data, the normal Serial Number of RemoteID is too long. It i
 ![RemoteID_data_in_Virtual_Radar_Server](./img/virtual_radar_server_remote_id.jpg)
 
 ![RemoteID_data_in_Virtual_Radar_Server_2](./img/virtual_radar_server_remote_id_2.jpg)
+
+## Testing
+The repository has a pytest suite covering the opendroneid/aircraft message decoding, CSV export and MQTT message routing. Install the extra test dependency and run it from the repository root:
+
+```
+pip3 install -r requirements-dev.txt
+pytest
+```
+
+## License
+This project is licensed under the MIT License. See [LICENSE](./LICENSE) for details.
