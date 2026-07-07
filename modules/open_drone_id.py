@@ -174,11 +174,11 @@ def print_Location(payload):
 	[TSAccuracy] =  struct.unpack('I', payload[Location_start_byte + 64:Location_start_byte + 64 + 4])
 	[TimeStamp] =  struct.unpack('f', payload[Location_start_byte + 68:Location_start_byte + 68 + 4])
 
-	print("HorizAccuracy......",  HorizAccuracy)
-	print("VertAccuracy......",  VertAccuracy)
-	print("BaroAccuracy......",  BaroAccuracy)
-	print("SpeedAccuracy......",  SpeedAccuracy)
-	print("TSAccuracy......",  TSAccuracy)
+	print("HorizAccuracy......",  decode_location_horiz_accuracy(HorizAccuracy))
+	print("VertAccuracy......",  decode_location_vert_accuracy(VertAccuracy))
+	print("BaroAccuracy......",  decode_location_vert_accuracy(BaroAccuracy))
+	print("SpeedAccuracy......",  decode_location_speed_accuracy(SpeedAccuracy))
+	print("TSAccuracy......",  decode_location_ts_accuracy(TSAccuracy))
 	if TimeStamp != float("NaN") and TimeStamp > 0 and TimeStamp <= 60*60:
 	    print("TimeStamp (MM:SS.mm).....%02i:%02i.%02i" % (int(TimeStamp/60), int(TimeStamp % 60), int(100*(TimeStamp - int(TimeStamp)))))
 	else:
@@ -268,7 +268,7 @@ def print_AuthPage(payload, page):
 	[DataPage] = struct.unpack('B', payload[AuthPage_start_byte + 0:AuthPage_start_byte + 1])
 	[AuthType] = struct.unpack('B', payload[AuthPage_start_byte + 4:AuthPage_start_byte + 5])
 	print("Data Page.........",  DataPage)
-	print("Auth Type.........",  AuthType)
+	print("Auth Type.........",  decode_auth_type(AuthType))
 
 	if page == 0:
 	    global LastPageIndex
@@ -452,5 +452,108 @@ def decode_operatorID_type(operatorID_type):
     string = ""
     if operatorID_type == 0:
         string = "Operator ID"
+
+    return string
+
+def decode_location_horiz_accuracy(horiz_accuracy):
+    string = ""
+    if horiz_accuracy == 0:
+        string = "Unknown"
+    elif horiz_accuracy == 1:
+        string = "10 NM (18.52 km)"
+    elif horiz_accuracy == 2:
+        string = "4 NM (7.408 km)"
+    elif horiz_accuracy == 3:
+        string = "2 NM (3.704 km)"
+    elif horiz_accuracy == 4:
+        string = "1 NM (1.852 km)"
+    elif horiz_accuracy == 5:
+        string = "0.5 NM (926 m)"
+    elif horiz_accuracy == 6:
+        string = "0.3 NM (555.6 m)"
+    elif horiz_accuracy == 7:
+        string = "0.1 NM (185.2 m)"
+    elif horiz_accuracy == 8:
+        string = "0.05 NM (92.6 m)"
+    elif horiz_accuracy == 9:
+        string = "30 m"
+    elif horiz_accuracy == 10:
+        string = "10 m"
+    elif horiz_accuracy == 11:
+        string = "3 m"
+    elif horiz_accuracy == 12:
+        string = "1 m"
+    else:
+        string = "Reserved (%d)" % horiz_accuracy
+
+    return string
+
+def decode_location_vert_accuracy(vert_accuracy):
+    string = ""
+    if vert_accuracy == 0:
+        string = "Unknown"
+    elif vert_accuracy == 1:
+        string = "150 m"
+    elif vert_accuracy == 2:
+        string = "45 m"
+    elif vert_accuracy == 3:
+        string = "25 m"
+    elif vert_accuracy == 4:
+        string = "10 m"
+    elif vert_accuracy == 5:
+        string = "3 m"
+    elif vert_accuracy == 6:
+        string = "1 m"
+    else:
+        string = "Reserved (%d)" % vert_accuracy
+
+    return string
+
+def decode_location_speed_accuracy(speed_accuracy):
+    string = ""
+    if speed_accuracy == 0:
+        string = "Unknown"
+    elif speed_accuracy == 1:
+        string = "10 m/s"
+    elif speed_accuracy == 2:
+        string = "3 m/s"
+    elif speed_accuracy == 3:
+        string = "1 m/s"
+    elif speed_accuracy == 4:
+        string = "0.3 m/s"
+    else:
+        string = "Reserved (%d)" % speed_accuracy
+
+    return string
+
+def decode_location_ts_accuracy(ts_accuracy):
+    string = ""
+    if ts_accuracy == 0:
+        string = "Unknown"
+    elif ts_accuracy >= 1 and ts_accuracy <= 15:
+        string = "%.1f s" % (ts_accuracy * 0.1)
+    else:
+        string = "Reserved (%d)" % ts_accuracy
+
+    return string
+
+def decode_auth_type(auth_type):
+    string = ""
+    if auth_type == 0:
+        string = "None"
+    elif auth_type == 1:
+        string = "UAS ID Signature"
+    elif auth_type == 2:
+        string = "Operator ID Signature"
+    elif auth_type == 3:
+        string = "Message Set Signature"
+    elif auth_type == 4:
+        string = "Network Remote ID"
+    elif auth_type == 5:
+        string = "Specific Authentication Method"
+    elif auth_type >= 6 and auth_type <= 9:
+        string = "Reserved (%d)" % auth_type
+    elif auth_type >= 10 and auth_type <= 15:
+        string = "Private Use (%d)" % auth_type
 
     return string
