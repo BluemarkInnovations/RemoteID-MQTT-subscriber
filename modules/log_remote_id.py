@@ -60,7 +60,7 @@ def write_csv(data_json, payload, valid_blocks, filename, extra_json):
         BasicID1_start_byte = 32
         [UAType_1] =  struct.unpack('I', payload[BasicID1_start_byte:BasicID1_start_byte + 4])
         [IDType_1] =  struct.unpack('I', payload[BasicID1_start_byte + 4:BasicID1_start_byte + 4 + 4])
-        if UAType_1 == 1 or UAType_1 == 2:
+        if IDType_1 == 1 or IDType_1 == 2:
             BasicID_1 = payload[BasicID1_start_byte + 8:BasicID1_start_byte + 8 + 21].decode('ascii').rstrip('\x00')
         else: #save as hex values
             BasicID_1 = payload[BasicID1_start_byte + 8:BasicID1_start_byte + 8 + 21].hex()

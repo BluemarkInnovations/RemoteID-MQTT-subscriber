@@ -1,6 +1,7 @@
 from bitstruct import *
 from datetime import datetime, timezone
 import json
+import base64
 
 def decode_valid_blocks(payload, valid_blocks):
 
@@ -42,6 +43,7 @@ def print_payload(payload, valid_blocks, data_json, extra_json):
 	print("type......",  data_json.get('type'))
 
 	try:
+		raw = base64.b64decode(data_json.get('raw'))
 		print("raw......",  raw.hex())
 	except:
 		pass
