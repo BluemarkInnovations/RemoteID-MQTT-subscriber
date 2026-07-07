@@ -26,13 +26,14 @@ from modules import tcp_sbs_export
 from modules import aircraft
 
 class open_drone_id_valid_blocks():
-    BasicID0_valid = 0
-    BasicID1_valid = 0
-    LocationValid = 0
-    SelfIDValid = 0
-    SystemValid = 0
-    OperatorIDValid = 0
-    AuthValid = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ] # max 13 pages up to 255 bytes data
+    def __init__(self):
+        self.BasicID0_valid = 0
+        self.BasicID1_valid = 0
+        self.LocationValid = 0
+        self.SelfIDValid = 0
+        self.SystemValid = 0
+        self.OperatorIDValid = 0
+        self.AuthValid = [0] * 16 # max 13 pages up to 255 bytes data
 
 def connect_mqtt() -> mqtt_client:
     if hasattr(mqtt_client, 'CallbackAPIVersion'): #Set API V1 if a new paho mqtt is installed. See https://eclipse.dev/paho/files/paho.mqtt.python/html/migrations.html
