@@ -24,6 +24,8 @@ from modules import open_drone_id
 from modules import log_remote_id
 from modules import tcp_sbs_export
 from modules import aircraft
+from modules import wlan_stats
+from modules import status_log
 
 class open_drone_id_valid_blocks():
     def __init__(self):
@@ -174,6 +176,12 @@ def subscribe(client: mqtt_client):
                         status_json = json_obj.get('status')
                         status_json.get('sensor ID') # fail if it is data json
 
+                        if hasattr(config, 'log_path'):
+                            if 'filename_status' not in globals():
+                                global filename_status
+                                filename_status = status_log.open_csv(config.log_path)
+                            status_log.write_csv(status_json, filename_status)
+
                         if config.print_messages == True:
                             print("status message")
                             print("sensor ID......",  status_json.get('sensor ID'))
@@ -183,6 +191,14 @@ def subscribe(client: mqtt_client):
                             print("firmware version......",  status_json.get('firmware version'))
                             print("model......",  status_json.get('model'))
                             print("status......",  status_json.get('status'))
+                            if status_json.get('status details') is not None: # only when status is degraded
+                                print("status details......",  status_json.get('status details'))
+                            wlan_radios = status_json.get('WLAN radios') # e.g. {"wlan1":"ok","wlan2":"stalled"}
+                            if wlan_radios is not None:
+                                print("WLAN radios......",  ", ".join(f"{name}: {state}" for name, state in wlan_radios.items()))
+                            sdr_receivers = status_json.get('SDR receivers') # e.g. {"1090":"ok","978":"missing"}
+                            if sdr_receivers is not None:
+                                print("SDR receivers......",  ", ".join(f"{name} MHz: {state}" for name, state in sdr_receivers.items()))
                             print("")
                     except:
                         pass
@@ -202,6 +218,19 @@ def subscribe(client: mqtt_client):
                             print("number of satellites.",  location_json.get('satellites'))
                             print("HDOP.................",  location_json.get('HDOP'))
                             print("")
+                    except:
+                        pass
+
+                    try:
+                        stats_json = json_obj.get('wlan statistics')
+                        stats_json.get('sensor ID') # fail if it is not a WLAN statistics json
+                        if hasattr(config, 'log_path'):
+                            if 'filename_wlan_stats' not in globals():
+                                global filename_wlan_stats
+                                filename_wlan_stats = wlan_stats.open_csv(config.log_path)
+                            wlan_stats.write_csv(stats_json, filename_wlan_stats)
+                        if config.print_messages == True:
+                            wlan_stats.print_payload(stats_json)
                     except:
                         pass
 

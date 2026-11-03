@@ -34,6 +34,8 @@ def decode_altitude_type(alt_type):
         alt_type_str = "baro altitude"
     elif alt_type == 2:
         alt_type_str = "GNSS height"
+    elif alt_type == 3:
+        alt_type_str = "GNSS MSL"
 
     return alt_type_str;
 
@@ -58,6 +60,16 @@ def decode_address_type(address_type):
         type_address = "reserved (6)"
     elif address_type == 7:
         type_address = "reserved (7)"
+    elif address_type == 8:
+        type_address = "random / anonymous address"
+    elif address_type == 9:
+        type_address = "FLARM address"
+    elif address_type == 10:
+        type_address = "OGN address"
+    elif address_type == 11:
+        type_address = "FANET address"
+    elif address_type == 12:
+        type_address = "other address"
 
     return type_address
 
@@ -162,6 +174,10 @@ def print_payload(aircraft_json, config):
         epoch_timestamp = datetime.fromtimestamp(aircraft_json.get('timestamp')/1000, tz=timezone.utc)
         print("time (local).........",  epoch_timestamp.strftime('%Y-%m-%d %H:%M:%S.%f')[:-3])
         print("Frequency [MHz]......",  aircraft_json.get('frequency MHz'))
+        if aircraft_json.get('RSSI') is not None: # left out by the sensor when the tuner gain is unknown (auto gain)
+            print("RSSI [dBm]...........",  aircraft_json.get('RSSI'))
+        else:
+            print("RSSI [dBm]........... N/A")
         print("type.................",  aircraft_json.get('type'))
         print("raw (hex)............",  aircraft_data.hex())
         addr = aircraft_json.get('address')
@@ -204,7 +220,7 @@ def open_csv(log_path):
         csv_writer = csv.writer(csvfile, delimiter=',',
                                 quotechar='"', quoting=csv.QUOTE_NONNUMERIC)
         #write header
-        csv_writer.writerow(['sensor ID'] + ['timestamp'] + ['time (of timestamp)'] + ['frequency MHz']
+        csv_writer.writerow(['sensor ID'] + ['timestamp'] + ['time (of timestamp)'] + ['frequency MHz'] + ['RSSI']
          + ['type'] + ['address'] + ['address type'] + ['flight']  + ['emergency status']  + ['flight state'] + ['category'] + ['altitude'] + ['altitude type'] + ['speed'] + ['track']  + ['vertical rate'] + ['message count']
          + ['latitude'] + ['longitude'] + ['raw data']
          )
@@ -229,7 +245,7 @@ def write_csv(data_json, filename):
              pass
 
         csv_writer.writerow([data_json.get('sensor ID'), data_json.get('timestamp'),
-            epoch_timestamp.strftime('%Y-%m-%d %H:%M:%S.%f')[:-4], data_json.get('frequency MHz'), data_json.get('type'), data_json.get('address'), data_json.get('address type')
+            epoch_timestamp.strftime('%Y-%m-%d %H:%M:%S.%f')[:-4], data_json.get('frequency MHz'), data_json.get('RSSI'), data_json.get('type'), data_json.get('address'), data_json.get('address type')
             , data_json.get('flight'), data_json.get('emergency status'), data_json.get('flight state'), data_json.get('category'),  data_json.get('altitude'), data_json.get('altitude type'), data_json.get('speed'), data_json.get('track')
             , data_json.get('vertical rate'), data_json.get('message count'), data_json.get('latitude'), data_json.get('longitude')
             , aircraft_data.hex()
