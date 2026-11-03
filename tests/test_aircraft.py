@@ -4,6 +4,7 @@ import types
 import pytest
 
 from modules import aircraft
+from modules import decode
 
 
 @pytest.mark.parametrize("value,expected", [(0, "ground"), (1, "air")])
@@ -94,7 +95,7 @@ def _aircraft_json(**overrides):
 
 def test_print_payload_prints_decoded_fields(capsys):
     config = types.SimpleNamespace(print_messages=True)
-    aircraft.print_payload(_aircraft_json(), config)
+    aircraft.print_payload(decode.decode_aircraft(_aircraft_json()), config)
     out = capsys.readouterr().out
     assert "4A1B2C" in out
     assert "ICAO address via ADS-B" in out
@@ -106,14 +107,14 @@ def test_print_payload_prints_decoded_fields(capsys):
 
 def test_print_payload_non_icao_address_masked(capsys):
     config = types.SimpleNamespace(print_messages=True)
-    aircraft.print_payload(_aircraft_json(**{'address type': 1, 'address': '4A1B2C'}), config)
+    aircraft.print_payload(decode.decode_aircraft(_aircraft_json(**{'address type': 1, 'address': '4A1B2C'})), config)
     out = capsys.readouterr().out
     assert "FF1B2C" in out
 
 
 def test_print_payload_zero_lat_lon_prints_na(capsys):
     config = types.SimpleNamespace(print_messages=True)
-    aircraft.print_payload(_aircraft_json(latitude=0.0, longitude=0.0), config)
+    aircraft.print_payload(decode.decode_aircraft(_aircraft_json(latitude=0.0, longitude=0.0)), config)
     out = capsys.readouterr().out
     assert "latitude............. N/A" in out
     assert "longitude............ N/A" in out
@@ -121,7 +122,7 @@ def test_print_payload_zero_lat_lon_prints_na(capsys):
 
 def test_print_payload_suppressed_when_disabled(capsys):
     config = types.SimpleNamespace(print_messages=False)
-    aircraft.print_payload(_aircraft_json(), config)
+    aircraft.print_payload(decode.decode_aircraft(_aircraft_json()), config)
     out = capsys.readouterr().out
     assert out == ""
 
@@ -132,7 +133,7 @@ def test_print_payload_suppressed_when_disabled(capsys):
 
 def test_open_csv_write_csv_round_trip(tmp_path):
     filename = aircraft.open_csv(str(tmp_path))
-    aircraft.write_csv(_aircraft_json(), filename)
+    aircraft.write_csv(decode.decode_aircraft(_aircraft_json()), filename)
 
     with open(filename, newline='', encoding='utf-8') as f:
         import csv
@@ -142,3 +143,4 @@ def test_open_csv_write_csv_round_trip(tmp_path):
     assert len(header) == len(data_row)
     assert 'DS-TEST-1' in data_row
     assert '4A1B2C' in data_row
+

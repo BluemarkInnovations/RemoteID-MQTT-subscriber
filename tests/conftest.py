@@ -6,6 +6,7 @@ hard-coded in modules/open_drone_id.py and modules/log_remote_id.py. This
 module rebuilds that same layout from scratch so tests can construct
 synthetic, deterministic payloads instead of relying on captured traffic.
 """
+import base64
 import struct
 import sys
 from datetime import datetime, timezone
@@ -17,6 +18,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from mqtt_sub import open_drone_id_valid_blocks
 from modules import open_drone_id
+from modules import decode
 
 PAYLOAD_LENGTH = 914
 
@@ -274,3 +276,36 @@ class Golden:
 @pytest.fixture
 def golden():
     return Golden
+
+
+def make_rid_msg(data_json, payload, valid_blocks=None, extra_json=None):
+    """Build a decode.RemoteIDMessage from a payload, like the subscriber does.
+
+    valid_blocks (open_drone_id_valid_blocks) overrides the valid flags in the
+    payload, so a test can switch blocks off without rebuilding the payload.
+    """
+    data = dict(data_json)
+    data['UASdata'] = base64.b64encode(payload).decode('ascii')
+    if extra_json is not None:
+        data['extra'] = extra_json
+    msg = decode.decode_remote_id(data)
+    if valid_blocks is not None:
+        uas = msg.uas
+        uas.basic_id[0].valid = valid_blocks.BasicID0_valid == 1
+        uas.basic_id[1].valid = valid_blocks.BasicID1_valid == 1
+        uas.location.valid = valid_blocks.LocationValid == 1
+        uas.self_id.valid = valid_blocks.SelfIDValid == 1
+        uas.system.valid = valid_blocks.SystemValid == 1
+        uas.operator_id.valid = valid_blocks.OperatorIDValid == 1
+        for page, a in enumerate(uas.auth):
+            a.valid = valid_blocks.AuthValid[page] == 1
+    return msg
+
+
+@pytest.fixture(autouse=True)
+def _no_exporters_left_over():
+    """Every test starts and ends without registered exporters."""
+    from modules import exporters
+    exporters.shutdown()
+    yield
+    exporters.shutdown()

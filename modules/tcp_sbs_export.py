@@ -1,7 +1,8 @@
-from bitstruct import *
 import socket
 import struct
 import config
+from modules import exporters
+from modules.decode import nan_to
 
 sbs_connection = None # one SBS client at a time, set by connect()
 
@@ -58,109 +59,68 @@ def transmit(data):
         sbs_connection = None
     return
 
-def export(payload, valid_blocks):
+def export(uas):
+    """Send a decoded RemoteID message (decode.UASData) as SBS MSG 1 (+ MSG 2/3/4 with a location).
+    Only drones with a serial number in Basic ID 0 are sent, the ICAO code is derived from it."""
+    if sbs_connection is None:
+        return
+    basic_id = uas.basic_id[0]
+    if not basic_id.valid or basic_id.id_type != 1: #only include serial number type
+        return
+    try:
+        basicID_data = basic_id.id_raw.decode('ascii').split('\x00')[0] #remove trailing data (zeroes)
+    except UnicodeDecodeError:
+        return
+    icao = ICAO(basicID_data)
 
-    if sbs_connection is not None:
-        output_str = ""
-        if valid_blocks.BasicID0_valid == 1:
-            #send MSG 1 identification
-            output_str = ""
-            output_str += str("MSG,1,,,")
+    # MSG 1 identification
+    transmit("MSG,1,,," + icao + ",,,,,," + callsign(basicID_data) + ",,,,,,,,0,0,0,0\n")
 
-            BasicID0_start_byte = 0
-            ID_length = 0
-            [IDType] =  struct.unpack('i', payload[BasicID0_start_byte + 4:BasicID0_start_byte + 4 + 4])
+    loc = uas.location
+    if not loc.valid:
+        return
 
-            if IDType == 1: #only include serial number type
-                basicID_data = str(payload[BasicID0_start_byte + 8:BasicID0_start_byte+ 8 + 21].decode('ascii'))
+    #MSG 2, 3, or 4 generation depending on in air or on ground status
+    Status = loc.status
+    output_str = "MSG,2,,,"
+    Emergency_flag = 0
+    Is_on_ground_flag = 1
+    if Status == 2: #in air
+        output_str = "MSG,3,,,"
+        Is_on_ground_flag = 0
+    if Status in (3, 4): # emergency codes
+        Emergency_flag = 1
+    flag_str = ",,,0," + str(Emergency_flag) + ",0," + str(Is_on_ground_flag) + "\n"
 
-                i = 0
-                while i < len(basicID_data): #remove trailing data (zeroes)
-                    if ord(basicID_data[i]) == 0:
-                        ID_length = i
-                        break
-                    i += 1
-                basicID_data = basicID_data[0:ID_length]
-                icao = ICAO(basicID_data)
+    # SBS has no "unknown": unknown values are sent as 0
+    Latitude = nan_to(loc.latitude, 0.0)
+    Longitude = nan_to(loc.longitude, 0.0)
+    AltitudeGeo = nan_to(loc.altitude_geo, 0.0)
+    Direction = nan_to(loc.direction, 0.0)
+    SpeedHorizontal = nan_to(loc.speed_horizontal, 0.0)
 
-                # MSG 1 generation and transmit
-                output_str += icao
-                output_str += str(",,,,,,")
-                output_str += callsign(basicID_data)
-                output_str += str(",,,,,,,,0,0,0,0\n")
+    output_str += icao + ",,,,,,,"
+    if Status == 1: #ground, MSG 2 includes altitude and speed
+        output_str += str(round(AltitudeGeo*3.28084))
+    output_str += ","
+    if Status == 1:
+        output_str += str(round(SpeedHorizontal*3.28084))
+    output_str += "," + str(round(Direction)) + "," + str(Latitude) + "," + str(Longitude) + flag_str
+    transmit(output_str)
+
+    if Status == 2: #air, send msg 4 also
+        transmit("MSG,4,,," + icao + ",,,,,,," + str(round(AltitudeGeo*3.28084)) + "," + str(round(SpeedHorizontal*3.28084))
+                 + "," + str(round(Direction)) + ",,,,0,0,0,0\n")
 
 
-                transmit(output_str)
+class SBSExporter(exporters.Exporter):
+    """SBS BaseStation output on a TCP port (Virtual Radar Server, FlightAirMap, adsbcot, ...)."""
+    name = "sbs"
 
-                if valid_blocks.LocationValid == 1:
-                    #MSG 2, 3, or 4 generation depending on in air or on ground status
+    def on_remote_id(self, msg):
+        export(msg.uas)
 
-                    Location_start_byte = 32 + 32
-                    output_str = str("MSG,2,,,")
-                    [Status] =  struct.unpack('i', payload[Location_start_byte:Location_start_byte + 4])
-
-                    Emergency_flag = 0
-                    Is_on_ground_flag = 1
-
-                    if Status == 2: #in air
-                       output_str = str("MSG,3,,,")
-                       Is_on_ground_flag = 0
-
-                    if Status in (3, 4): # emergency codes
-                        Emergency_flag = 1
-
-                    flag_str = str(",,,0,") + str(Emergency_flag) + ",0," + str(Is_on_ground_flag) + str("\n")
-
-                    output_str += icao
-                    output_str += str(",,,,,,,")
-
-                    [Latitude] =  struct.unpack('d', payload[Location_start_byte + 16:Location_start_byte + 16 + 8])
-                    if Latitude > 90.0 or Latitude < -90.0:
-                        Latitude = 0.0
-
-                    [Longitude] =  struct.unpack('d', payload[Location_start_byte + 24:Location_start_byte + 24 + 8])
-                    if Longitude > 180.0 or Longitude < -180.0:
-                        Longitude =0.0
-
-                    [AltitudeGeo] =  struct.unpack('f', payload[Location_start_byte + 36:Location_start_byte + 36 + 4])
-                    if AltitudeGeo <= -1000.0 or AltitudeGeo > 31767.5:
-                        AltitudeGeo = 0.0
-
-                    [Direction] =  struct.unpack('f', payload[Location_start_byte + 4:Location_start_byte + 4 + 4])
-                    if Direction > 360 or Direction < 0:
-                        Direction = 0.0
-
-                    [SpeedHorizontal] =  struct.unpack('f', payload[Location_start_byte + 8:Location_start_byte + 8 + 4])
-                    if SpeedHorizontal > 254.25 or SpeedHorizontal < 0:
-                        SpeedHorizontal = 0.0
-
-                    #for MSG 2 include these fields
-                    if Status == 1: #ground
-                        output_str += str(round(AltitudeGeo*3.28084))
-
-                    output_str += str(",")
-                    if Status == 1: #ground
-                        output_str += str(round(SpeedHorizontal*3.28084))
-
-                    output_str += str(",")
-                    output_str += str(round(Direction))
-                    output_str += str(",")
-                    output_str += str(Latitude)
-                    output_str += str(",")
-                    output_str += str(Longitude)
-                    output_str += flag_str
-
-                    transmit(output_str)
-
-                    if Status == 2: #air, send msg 4 also
-                         output_str = str("MSG,4,,,")
-                         output_str += icao
-                         output_str += str(",,,,,,,")
-                         output_str += str(round(AltitudeGeo*3.28084))
-                         output_str += str(",")
-                         output_str += str(round(SpeedHorizontal*3.28084))
-                         output_str += str(",")
-                         output_str += str(round(Direction))
-                         output_str += str(",,,,0,0,0,0\n")
-
-                         transmit(output_str)
+    def on_aircraft(self, msg):
+        # the sensor generates the SBS lines for aircraft itself
+        for sbs_line in msg.sbs_lines:
+            transmit(sbs_line + '\n')

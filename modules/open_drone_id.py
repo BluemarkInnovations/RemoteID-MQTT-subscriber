@@ -1,7 +1,5 @@
 from bitstruct import *
 from datetime import datetime, timezone
-import json
-import base64
 
 def decode_valid_blocks(payload, valid_blocks):
 
@@ -30,7 +28,11 @@ def decode_valid_blocks(payload, valid_blocks):
 
 
 
-def print_payload(payload, valid_blocks, data_json, extra_json):
+def print_payload(msg):
+	"""Print a decoded RemoteIDMessage (modules/decode.py)."""
+	data_json = msg.json
+	uas = msg.uas
+	extra_json = msg.extra
 
 	print("data message")
 	print("sensor ID......",  data_json.get('sensor ID'))
@@ -42,33 +44,30 @@ def print_payload(payload, valid_blocks, data_json, extra_json):
 	print("MAC address......",  data_json.get('MAC address'))
 	print("type......",  data_json.get('type'))
 
-	try:
-		raw = base64.b64decode(data_json.get('raw'))
-		print("raw......",  raw.hex())
-	except:
-		pass
+	if msg.raw is not None:
+		print("raw......",  msg.raw.hex())
 
-	if valid_blocks.BasicID0_valid == 1:
-		print_basicID0(payload)
+	if uas.basic_id[0].valid:
+		print_basicID0(uas.basic_id[0])
 
-	if valid_blocks.BasicID1_valid == 1:
-		print_basicID1(payload)
+	if uas.basic_id[1].valid:
+		print_basicID1(uas.basic_id[1])
 
-	if valid_blocks.LocationValid == 1:
-		print_Location(payload)
+	if uas.location.valid:
+		print_Location(uas.location)
 
-	if valid_blocks.SelfIDValid == 1:
-		print_SelfID(payload)
+	if uas.self_id.valid:
+		print_SelfID(uas.self_id)
 
-	if valid_blocks.SystemValid == 1:
-		print_System(payload)
+	if uas.system.valid:
+		print_System(uas.system)
 
-	if valid_blocks.OperatorIDValid == 1:
-		print_OperatorID(payload)
+	if uas.operator_id.valid:
+		print_OperatorID(uas.operator_id)
 
-	for x in range(16):
-		if valid_blocks.AuthValid[x] == 1:
-			print_AuthPage(payload, x)
+	for page in range(len(uas.auth)):
+		if uas.auth[page].valid:
+			print_AuthPage(uas, page)
 
 	if len(extra_json) > 0:
 		if extra_json.get('SN present') == 1:
@@ -94,94 +93,47 @@ def clean_string(string):
 
 
 
-def print_basicID0(payload):
-
-	BasicID0_start_byte = 0
-	[UAType] =  struct.unpack('I', payload[BasicID0_start_byte:BasicID0_start_byte + 4])
-	[IDType] =  struct.unpack('I', payload[BasicID0_start_byte + 4:BasicID0_start_byte + 4 + 4])
-	print("Basic ID 0 data")
-	print("UAType......",  decode_basicID_UA_type(UAType))
-	print("IDType......",  decode_basicID_ID_type(IDType))
-	if IDType == 1 or IDType == 2:
-	    print("Basic ID......",  clean_string(payload[BasicID0_start_byte + 8:BasicID0_start_byte + 8 + 21].decode('ascii')))
+def _print_basic_id(title, basic_id):
+	print(title)
+	print("UAType......",  decode_basicID_UA_type(basic_id.ua_type))
+	print("IDType......",  decode_basicID_ID_type(basic_id.id_type))
+	if basic_id.is_text:
+	    print("Basic ID......",  clean_string(basic_id.id_raw.decode('ascii')))
 	else:
-	    print("Basic ID......",  payload[BasicID0_start_byte + 8:BasicID0_start_byte+ 8 + 21].hex())
+	    print("Basic ID......",  basic_id.id_raw.hex())
 
 	print("")
 
 
+def print_basicID0(basic_id):
+	_print_basic_id("Basic ID 0 data", basic_id)
 
-def print_basicID1(payload):
 
-	BasicID1_start_byte = 32
-	[UAType] =  struct.unpack('I', payload[BasicID1_start_byte:BasicID1_start_byte + 4])
-	[IDType] =  struct.unpack('I', payload[BasicID1_start_byte + 4:BasicID1_start_byte + 4 + 4])
-	print("Basic ID 1 data")
-	print("UAType......",  decode_basicID_UA_type(UAType))
-	print("IDType......",  decode_basicID_ID_type(IDType))
-	if IDType == 1 or IDType == 2:
-	    print("Basic ID......",  clean_string(payload[BasicID1_start_byte + 8:BasicID1_start_byte + 8 + 21].decode('ascii')))
-	else:
-	    print("Basic ID......",  payload[BasicID1_start_byte + 8:BasicID1_start_byte+ 8 + 21].hex())
-
-	print("")
+def print_basicID1(basic_id):
+	_print_basic_id("Basic ID 1 data", basic_id)
 
 
 
-def print_Location(payload):
+def print_Location(loc):
 
-	Location_start_byte = 32 + 32
 	print("Location data")
-	[Status] =  struct.unpack('I', payload[Location_start_byte:Location_start_byte + 4])
-	print("Status......",  decode_location_status(Status))
-	[Direction] =  struct.unpack('f', payload[Location_start_byte + 4:Location_start_byte + 4 + 4])
-	if Direction > 360 or Direction < 0:
-	    Direction = float("NaN")
-	print("Direction......",  Direction)
-	[SpeedHorizontal] =  struct.unpack('f', payload[Location_start_byte + 8:Location_start_byte + 8 + 4])
-	if SpeedHorizontal > 254.25 or SpeedHorizontal < 0:
-	    SpeedHorizontal = float("NaN")
-	[SpeedVertical] =  struct.unpack('f', payload[Location_start_byte + 12:Location_start_byte + 12 + 4])
-	print("SpeedHorizontal......",  SpeedHorizontal)
-	if SpeedVertical > 62 or SpeedVertical < -62:
-	    SpeedVertical = float("NaN")
-	print("SpeedVertical......",  SpeedVertical)
-	[Latitude] =  struct.unpack('d', payload[Location_start_byte + 16:Location_start_byte + 16 + 8])
-	if Latitude == 0.0 or Latitude > 90.0 or Latitude < -90.0:
-	    Latitude = float("NaN")
-	[Longitude] =  struct.unpack('d', payload[Location_start_byte + 24:Location_start_byte + 24 + 8])
-	if Longitude == 0.0 or Longitude > 180.0 or Longitude < -180.0:
-	    Longitude = float("NaN")
-	print("Latitude......",  Latitude)
-	print("Longitude......",  Longitude)
-
-	[AltitudeBaro] =  struct.unpack('f', payload[Location_start_byte + 32:Location_start_byte + 32 + 4])
-	if AltitudeBaro <= -1000.0 or AltitudeBaro > 31767.5:
-	    AltitudeBaro = float("NaN")
-	[AltitudeGeo] =  struct.unpack('f', payload[Location_start_byte + 36:Location_start_byte + 36 + 4])
-	if AltitudeGeo <= -1000.0 or AltitudeGeo > 31767.5:
-	    AltitudeGeo = float("NaN")
-	print("AltitudeBaro......",  AltitudeBaro)
-	print("AltitudeGeo......",  AltitudeGeo)
-	[HeightType] =  struct.unpack('I ', payload[Location_start_byte + 40:Location_start_byte + 40 + 4])
-	[Height] =  struct.unpack('f', payload[Location_start_byte + 44:Location_start_byte + 44 + 4])
-	if Height <= -1000.0 or Height > 31767.5:
-	    Height = float("NaN")
-	print("HeightType......",  decode_location_height_type(HeightType))
-	print("Height......",  Height)
-	[HorizAccuracy] =  struct.unpack('I', payload[Location_start_byte + 48:Location_start_byte + 48 + 4])
-	[VertAccuracy] =  struct.unpack('I', payload[Location_start_byte + 52:Location_start_byte + 52 + 4])
-	[BaroAccuracy] =  struct.unpack('I', payload[Location_start_byte + 56:Location_start_byte + 56 + 4])
-	[SpeedAccuracy] =  struct.unpack('I', payload[Location_start_byte + 60:Location_start_byte + 60 + 4])
-	[TSAccuracy] =  struct.unpack('I', payload[Location_start_byte + 64:Location_start_byte + 64 + 4])
-	[TimeStamp] =  struct.unpack('f', payload[Location_start_byte + 68:Location_start_byte + 68 + 4])
-
-	print("HorizAccuracy......",  decode_location_horiz_accuracy(HorizAccuracy))
-	print("VertAccuracy......",  decode_location_vert_accuracy(VertAccuracy))
-	print("BaroAccuracy......",  decode_location_vert_accuracy(BaroAccuracy))
-	print("SpeedAccuracy......",  decode_location_speed_accuracy(SpeedAccuracy))
-	print("TSAccuracy......",  decode_location_ts_accuracy(TSAccuracy))
-	if TimeStamp != float("NaN") and TimeStamp > 0 and TimeStamp <= 60*60:
+	print("Status......",  decode_location_status(loc.status))
+	print("Direction......",  loc.direction)
+	print("SpeedHorizontal......",  loc.speed_horizontal)
+	print("SpeedVertical......",  loc.speed_vertical)
+	print("Latitude......",  loc.latitude)
+	print("Longitude......",  loc.longitude)
+	print("AltitudeBaro......",  loc.altitude_baro)
+	print("AltitudeGeo......",  loc.altitude_geo)
+	print("HeightType......",  decode_location_height_type(loc.height_type))
+	print("Height......",  loc.height)
+	print("HorizAccuracy......",  decode_location_horiz_accuracy(loc.horiz_accuracy))
+	print("VertAccuracy......",  decode_location_vert_accuracy(loc.vert_accuracy))
+	print("BaroAccuracy......",  decode_location_vert_accuracy(loc.baro_accuracy))
+	print("SpeedAccuracy......",  decode_location_speed_accuracy(loc.speed_accuracy))
+	print("TSAccuracy......",  decode_location_ts_accuracy(loc.ts_accuracy))
+	TimeStamp = loc.timestamp
+	if TimeStamp > 0 and TimeStamp <= 60*60:
 	    print("TimeStamp (MM:SS.mm).....%02i:%02i.%02i" % (int(TimeStamp/60), int(TimeStamp % 60), int(100*(TimeStamp - int(TimeStamp)))))
 	else:
 	    print("Timestamp......invalid")
@@ -189,112 +141,70 @@ def print_Location(payload):
 
 
 
-def print_SelfID(payload):
+def print_SelfID(self_id):
 
 	print("Self ID data")
-	SelfID_start_byte = 776
-	[DescType] =  struct.unpack('I', payload[SelfID_start_byte:SelfID_start_byte + 4])
-	Desc = payload[SelfID_start_byte + 4:SelfID_start_byte + 4 + 23]
-	print("Desc Type......",  decode_selfID_type(DescType))
-	print("Desc......",  Desc.decode('ascii'))
+	print("Desc Type......",  decode_selfID_type(self_id.desc_type))
+	print("Desc......",  self_id.desc_raw.decode('ascii'))
 	print("")
 
 
 
-def print_System(payload):
+def print_System(system):
 
 	print("System data")
-	System_start_byte = 808
-	[OperatorLocationType] =  struct.unpack('I', payload[System_start_byte:System_start_byte + 4])
-	[ClassificationType] =  struct.unpack('I', payload[System_start_byte + 4:System_start_byte + 4+ 4])
+	print("Operator Location Type......",  decode_system_operator_location_type(system.operator_location_type))
+	print("Classification Type......",  decode_system_classification_type(system.classification_type))
+	print("Operator Latitude......",  system.operator_latitude)
+	print("Operator Longitude......",  system.operator_longitude)
+	print("Area Count......",  system.area_count)
+	print("Area Radius......",  system.area_radius)
+	print("Area Ceiling......",  system.area_ceiling)
+	print("Area Floor......",  system.area_floor)
+	print("Category EU......",  decode_system_ua_category(system.category_eu))
+	print("Class EU......",  decode_system_ua_class(system.class_eu))
+	print("Operator Altitude Geo......",  system.operator_altitude_geo)
 
-	print("Operator Location Type......",  decode_system_operator_location_type(OperatorLocationType))
-	print("Classification Type......",  decode_system_classification_type(ClassificationType))
-
-	[OperatorLatitude] =  struct.unpack('d', payload[System_start_byte + 8:System_start_byte + 8 + 8])
-	[OperatorLongitude] = struct.unpack('d', payload[System_start_byte + 16:System_start_byte + 16 + 8])
-
-	if OperatorLatitude == 0.0 or OperatorLatitude > 90.0 or OperatorLatitude < -90.0:
-	    OperatorLatitude = float("NaN")
-	if OperatorLongitude == 0.0 or OperatorLongitude > 180.0 or OperatorLongitude < -180.0:
-	    OperatorLongitude = float("NaN")
-
-	print("Operator Latitude......",  OperatorLatitude)
-	print("Operator Longitude......",  OperatorLongitude)
-
-	[AreaCount] =  struct.unpack('H', payload[System_start_byte + 24:System_start_byte + 24 + 2])
-	[AreaRadius] =  struct.unpack('H', payload[System_start_byte + 26:System_start_byte + 26 + 2])
-	[AreaCeiling] =  struct.unpack('f', payload[System_start_byte + 28:System_start_byte + 28 + 4])
-	if AreaCeiling == -1000:
-	    AreaCeiling = float("NaN")
-	[AreaFloor] =  struct.unpack('f', payload[System_start_byte + 32:System_start_byte + 32 + 4])
-	if AreaFloor == -1000:
-	    AreaFloor = float("NaN")
-	[CategoryEU] =  struct.unpack('I', payload[System_start_byte + 36:System_start_byte + 36 + 4])
-	[ClassEU] =  struct.unpack('I', payload[System_start_byte + 40:System_start_byte + 40 + 4])
-	[OperatorAltitudeGeo] =  struct.unpack('f', payload[System_start_byte + 44:System_start_byte + 44 + 4])
-	if OperatorAltitudeGeo <= -1000.0 or OperatorAltitudeGeo > 31767.5:
-	    OperatorAltitudeGeo = float("NaN")
-	[Timestamp] =  struct.unpack('I', payload[System_start_byte + 48:System_start_byte + 48 + 4])
-	print("Area Count......",  AreaCount)
-	print("Area Radius......",  AreaRadius)
-	print("Area Ceiling......",  AreaCeiling)
-	print("Area Floor......",  AreaFloor)
-	print("Category EU......",  decode_system_ua_category(CategoryEU))
-	print("Class EU......",  decode_system_ua_class(ClassEU))
-	print("Operator Altitude Geo......",  OperatorAltitudeGeo)
-
-	if Timestamp != float("NaN") and Timestamp != 0:
-	    print("Timestamp......",  datetime.fromtimestamp((int(Timestamp) + 1546300800), tz=timezone.utc).strftime('%Y-%m-%d %H:%M %Z'))
+	if system.timestamp != 0:
+	    print("Timestamp......",  datetime.fromtimestamp((int(system.timestamp) + 1546300800), tz=timezone.utc).strftime('%Y-%m-%d %H:%M %Z'))
 	else:
 	    print("Timestamp......invalid")
-	print("Timestamp raw......",  Timestamp)
+	print("Timestamp raw......",  system.timestamp)
 	print("")
 
 
 
-def print_OperatorID(payload):
+def print_OperatorID(operator_id):
 
-	OperatorID_start_byte = 864
 	print("Operator ID data")
-	[OperatorIdType] =  struct.unpack('I', payload[OperatorID_start_byte:OperatorID_start_byte + 4])
-	print("Operator ID Type......",  decode_operatorID_type(OperatorIdType))
-	print("Operator ID......",  payload[OperatorID_start_byte + 4:OperatorID_start_byte + 4 + 20].decode('ascii'))
+	print("Operator ID Type......",  decode_operatorID_type(operator_id.id_type))
+	print("Operator ID......",  operator_id.id_raw.decode('ascii'))
 	print("")
 
 
-def print_AuthPage(payload, page):
-
-	AuthPage_start_byte = 136 + 40*page
+def print_AuthPage(uas, page):
+	"""Print one auth page. The total length and last page index come from page 0."""
+	auth = uas.auth[page]
 	print("Auth data")
-	[DataPage] = struct.unpack('B', payload[AuthPage_start_byte + 0:AuthPage_start_byte + 1])
-	[AuthType] = struct.unpack('B', payload[AuthPage_start_byte + 4:AuthPage_start_byte + 5])
-	print("Data Page.........",  DataPage)
-	print("Auth Type.........",  decode_auth_type(AuthType))
+	print("Data Page.........",  auth.data_page)
+	print("Auth Type.........",  decode_auth_type(auth.auth_type))
 
 	if page == 0:
-	    global LastPageIndex
-	    global Length
-	    [LastPageIndex] = struct.unpack('B', payload[AuthPage_start_byte + 8:AuthPage_start_byte + 9])
-	    [Length] = struct.unpack('B', payload[AuthPage_start_byte + 9:AuthPage_start_byte + 10])
-	    [Timestamp] =  struct.unpack('I', payload[AuthPage_start_byte + 12:AuthPage_start_byte + 12 + 4])
+	    print("Last Page Index...",  auth.last_page_index)
+	    print("Length............",  auth.length)
 
-	    print("Last Page Index...",  LastPageIndex)
-	    print("Length............",  Length)
-
-	    if Timestamp != float("NaN") and Timestamp != 0:
-	        print("Timestamp.........",  datetime.fromtimestamp((int(Timestamp) + 1546300800), tz=timezone.utc).strftime('%Y-%m-%d %H:%M %Z'))
+	    if auth.timestamp != 0:
+	        print("Timestamp.........",  datetime.fromtimestamp((int(auth.timestamp) + 1546300800), tz=timezone.utc).strftime('%Y-%m-%d %H:%M %Z'))
 	    else:
 	        print("Timestamp.........invalid")
 
-	    AuthData = payload[AuthPage_start_byte + 16:AuthPage_start_byte + 16 + 17]
-	    print("Auth Data.........",AuthData.hex())
+	    print("Auth Data.........",auth.data_raw[:17].hex())
 	else:
-	    if page == LastPageIndex:
+	    if page == uas.auth[0].last_page_index:
 	        #only print the chars within the specified length of the pages auth message
-	        AuthData = payload[AuthPage_start_byte + 16:AuthPage_start_byte + 16 + (Length - 17) % 23]
+	        AuthData = auth.data_raw[:(uas.auth[0].length - 17) % 23]
 	    else:
-	        AuthData = payload[AuthPage_start_byte + 16:AuthPage_start_byte + 16 + 23]
+	        AuthData = auth.data_raw
 	    print("Auth Data.........",AuthData.hex())
 	print("")
 

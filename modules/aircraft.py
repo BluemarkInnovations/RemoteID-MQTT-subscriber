@@ -1,8 +1,5 @@
-import json
-import base64
 import csv
 from datetime import datetime, timezone
-from modules import tcp_sbs_export
 
 def decode_flight_state(state):
     state =  int(state)
@@ -162,11 +159,10 @@ def decode_emitter_category(category, technology):
     return category_str
 
 
-def print_payload(aircraft_json, config):
-    aircraft_data = base64.b64decode(aircraft_json.get('raw'))
-    #remove trailing \0 character from raw data
-    if ord(aircraft_data[-1:]) == 0 or ord(aircraft_data[-1:]) == 10:
-        aircraft_data = aircraft_data[:-1]
+def print_payload(msg, config):
+    """Print a decoded AircraftMessage (modules/decode.py)."""
+    aircraft_json = msg.json
+    aircraft_data = msg.raw
     if config.print_messages == True:
         print("Aircraft message")
         print("sensor ID............",  aircraft_json.get('sensor ID'))
@@ -227,22 +223,16 @@ def open_csv(log_path):
 
     return filename
 
-def write_csv(data_json, filename):
-
+def write_csv(msg, filename):
+    """Append one row for a decoded AircraftMessage (modules/decode.py)."""
+    data_json = msg.json
+    aircraft_data = msg.raw
 
     with open(filename, 'a', newline='', encoding='utf-8') as csvfile:
         csv_writer = csv.writer(csvfile, delimiter=',',
                                 quotechar='"', quoting=csv.QUOTE_NONNUMERIC)
         #write row
         epoch_timestamp = datetime.fromtimestamp(data_json.get('timestamp')/1000, tz=timezone.utc)
-
-        try:
-             aircraft_data = base64.b64decode(data_json.get('raw'))
-             #remove trailing \0 character from raw data
-             if ord(aircraft_data[-1:]) == 0 or ord(aircraft_data[-1:]) == 10:
-                 aircraft_data = aircraft_data[:-1]
-        except:
-             pass
 
         csv_writer.writerow([data_json.get('sensor ID'), data_json.get('timestamp'),
             epoch_timestamp.strftime('%Y-%m-%d %H:%M:%S.%f')[:-4], data_json.get('frequency MHz'), data_json.get('RSSI'), data_json.get('type'), data_json.get('address'), data_json.get('address type')

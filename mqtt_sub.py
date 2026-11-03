@@ -10,13 +10,10 @@
 import random
 import ssl
 import json
-import base64
 from paho.mqtt import client as mqtt_client
-from bitstruct import *
 import lzma
 from datetime import datetime, timezone
 import threading
-import sys
 
 import config # config.py with MQTT broker configuration
 
@@ -26,6 +23,8 @@ from modules import tcp_sbs_export
 from modules import aircraft
 from modules import wlan_stats
 from modules import status_log
+from modules import decode
+from modules import exporters
 
 class open_drone_id_valid_blocks():
     def __init__(self):
@@ -73,6 +72,54 @@ def connect_mqtt() -> mqtt_client:
     return client
 
 
+def handle_remote_id(data_json):
+    """RemoteID "data" message: decode once, then CSV, console and exporters."""
+    try:
+        msg = decode.decode_remote_id(data_json)
+    except Exception as e:
+        if config.print_messages == True:
+            print("RemoteID message not decoded:", e)
+        return
+
+    if hasattr(config, 'log_path'):
+        try:
+            if 'filename_rid' not in globals():
+                global filename_rid
+                filename_rid = log_remote_id.open_csv(config.log_path)
+            log_remote_id.write_csv(msg, filename_rid)
+        except Exception:
+            pass
+
+    if config.print_messages == True:
+        try:
+            open_drone_id.print_payload(msg)
+        except Exception:
+            pass
+
+    exporters.publish('on_remote_id', msg)
+
+
+def handle_aircraft(aircraft_json):
+    """ADS-B / UAT / ADS-L "aircraft" message: decode once, then CSV, console and exporters."""
+    msg = decode.decode_aircraft(aircraft_json)
+
+    if hasattr(config, 'log_path'):
+        try:
+            if 'filename_aircraft' not in globals():
+                global filename_aircraft
+                filename_aircraft = aircraft.open_csv(config.log_path)
+            aircraft.write_csv(msg, filename_aircraft)
+        except Exception:
+            pass
+
+    try:
+        aircraft.print_payload(msg, config)
+    except Exception:
+        pass
+
+    exporters.publish('on_aircraft', msg)
+
+
 def subscribe(client: mqtt_client):
     def on_message(client, userdata, msg):
         if config.print_messages == True:
@@ -114,67 +161,18 @@ def subscribe(client: mqtt_client):
 
             try:
                 if json_obj.get('protocol') == 1.0:
-                    try:
-                        data_json = json_obj.get('data')
-                        if (sys.getsizeof(data_json) > 16): #json exists if larger as 16 bytes
-                            UASdata = base64.b64decode(data_json.get('UASdata'))
+                    data_json = json_obj.get('data')
+                    if isinstance(data_json, dict) and data_json.get('UASdata') is not None:
+                        handle_remote_id(data_json)
 
-                            try:
-                                raw = base64.b64decode(data_json.get('raw'))
-                            except:
-                                pass
-
-                            valid_open_drone_id_blocks = open_drone_id_valid_blocks()
-                            open_drone_id.decode_valid_blocks(UASdata, valid_open_drone_id_blocks)
-                            try:
-                                extra_json = data_json.get('extra')
-                                if extra_json is None:
-                                    extra_json = {}
-                            except:
-                                extra_json = {}
-
-                            if hasattr(config, 'log_path'):
-                                if 'filename_rid' not in globals():
-                                    global filename_rid
-                                    filename_rid = log_remote_id.open_csv(config.log_path)
-                                log_remote_id.write_csv(data_json,UASdata, valid_open_drone_id_blocks,filename_rid,extra_json)
-
-                            if config.print_messages == True:
-                                open_drone_id.print_payload(UASdata, valid_open_drone_id_blocks, data_json, extra_json)
-
-                            try:
-                                tcp_sbs_export.export(UASdata, valid_open_drone_id_blocks)
-                            except:
-                                pass
-                    except:
-                        pass
-
-                    try:
-                        aircraft_json = json_obj.get('aircraft')
-                        if (sys.getsizeof(aircraft_json) > 16): #json exists if larger as 16 bytes
-                            if hasattr(config, 'log_path'):
-                                if 'filename_aircraft' not in globals():
-                                    global filename_aircraft
-                                    filename_aircraft = aircraft.open_csv(config.log_path)
-                                aircraft.write_csv(aircraft_json, filename_aircraft)
-
-                        aircraft.print_payload(aircraft_json,config)
-
-                        sbs_data = aircraft_json.get('SBS')
-                        if ord(sbs_data[-1:]) == 0 or ord(sbs_data[-1:]) == 10:
-                            sbs_data = sbs_data[:-1]
-                        SBS_split = sbs_data.split(";")
-                        for sbs_line in SBS_split:
-                            try:
-                                tcp_sbs_export.transmit(sbs_line + '\n')
-                            except:
-                                pass
-                    except:
-                        pass
+                    aircraft_json = json_obj.get('aircraft')
+                    if isinstance(aircraft_json, dict):
+                        handle_aircraft(aircraft_json)
 
                     try:
                         status_json = json_obj.get('status')
                         status_json.get('sensor ID') # fail if it is data json
+                        exporters.publish('on_status', status_json)
 
                         if hasattr(config, 'log_path'):
                             if 'filename_status' not in globals():
@@ -206,6 +204,7 @@ def subscribe(client: mqtt_client):
                     try:
                         location_json = json_obj.get('location')
                         location_json.get('sensor ID') # fail if it is data json
+                        exporters.publish('on_location', location_json)
                         if config.print_messages == True:
                             print("location message")
                             print("sensor ID............",  location_json.get('sensor ID'))
@@ -258,16 +257,22 @@ def subscribe(client: mqtt_client):
     client.subscribe(config.topic)
     client.on_message = on_message
 
-def run():
-    if not hasattr(config, 'print_messages'):
-        config.print_messages = True
-
-    if hasattr(config, 'sbs_server_ip_address'): # only enable SBS export if relevant vars have been defined
-        if hasattr(config, 'sbs_server_port'):
+def setup_exporters(threaded=True, start_sbs_listener=True):
+    """Register the outputs enabled in config.py."""
+    if hasattr(config, 'sbs_server_ip_address') and hasattr(config, 'sbs_server_port'): # only enable SBS export if relevant vars have been defined
+        if start_sbs_listener:
             print("SBS export thread started")
             sbs_thread = threading.Thread(target=tcp_sbs_export.connect, args=(1,))
             sbs_thread.daemon = True
             sbs_thread.start()
+        exporters.register(tcp_sbs_export.SBSExporter(), threaded=threaded)
+
+
+def run():
+    if not hasattr(config, 'print_messages'):
+        config.print_messages = True
+
+    setup_exporters()
 
     client = connect_mqtt()
     client.loop_forever()

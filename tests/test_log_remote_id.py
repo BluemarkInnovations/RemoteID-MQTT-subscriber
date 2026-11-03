@@ -2,6 +2,7 @@ import base64
 import csv
 
 from modules import log_remote_id
+from conftest import make_rid_msg
 
 
 def _data_json(**overrides):
@@ -35,8 +36,7 @@ def _read_csv(filename):
 
 def test_header_and_row_have_same_column_count(tmp_path, golden):
     filename = log_remote_id.open_csv(str(tmp_path))
-    log_remote_id.write_csv(_data_json(), golden.payload(), golden.valid_blocks(),
-                             filename, _extra_json())
+    log_remote_id.write_csv(make_rid_msg(_data_json(), golden.payload(), golden.valid_blocks(), _extra_json()), filename)
 
     rows = _read_csv(filename)
     header, data_row = rows[0], rows[1]
@@ -52,8 +52,7 @@ def test_basic_id1_decoded_by_idtype_not_uatype(tmp_path, golden):
     from tests.conftest import BASIC_ID1_STR
 
     filename = log_remote_id.open_csv(str(tmp_path))
-    log_remote_id.write_csv(_data_json(), golden.payload(), golden.valid_blocks(),
-                             filename, _extra_json())
+    log_remote_id.write_csv(make_rid_msg(_data_json(), golden.payload(), golden.valid_blocks(), _extra_json()), filename)
 
     header, data_row = _read_csv(filename)
     row = dict(zip(header, data_row))
@@ -62,8 +61,7 @@ def test_basic_id1_decoded_by_idtype_not_uatype(tmp_path, golden):
 
 def test_valid_fields_present_in_row(tmp_path, golden):
     filename = log_remote_id.open_csv(str(tmp_path))
-    log_remote_id.write_csv(_data_json(), golden.payload(), golden.valid_blocks(),
-                             filename, _extra_json())
+    log_remote_id.write_csv(make_rid_msg(_data_json(), golden.payload(), golden.valid_blocks(), _extra_json()), filename)
 
     header, data_row = _read_csv(filename)
     row = dict(zip(header, data_row))
@@ -88,7 +86,7 @@ def test_invalid_blocks_write_empty_fields(tmp_path, golden):
     vb.BasicID1_valid = 0
 
     filename = log_remote_id.open_csv(str(tmp_path))
-    log_remote_id.write_csv(_data_json(), golden.payload(), vb, filename, {})
+    log_remote_id.write_csv(make_rid_msg(_data_json(), golden.payload(), vb, {}), filename)
 
     header, data_row = _read_csv(filename)
     row = dict(zip(header, data_row))
@@ -104,7 +102,7 @@ def test_auth_page_not_valid_defaults_to_empty(tmp_path, golden):
     vb.AuthValid[1] = 0
 
     filename = log_remote_id.open_csv(str(tmp_path))
-    log_remote_id.write_csv(_data_json(), golden.payload(), vb, filename, {})
+    log_remote_id.write_csv(make_rid_msg(_data_json(), golden.payload(), vb, {}), filename)
 
     header, data_row = _read_csv(filename)
     row = dict(zip(header, data_row))
@@ -115,8 +113,7 @@ def test_auth_page_not_valid_defaults_to_empty(tmp_path, golden):
 def test_no_extra_json_does_not_crash(tmp_path, golden):
     filename = log_remote_id.open_csv(str(tmp_path))
     # extra_json empty dict, as mqtt_sub.py passes when 'extra' key is absent
-    log_remote_id.write_csv(_data_json(), golden.payload(), golden.valid_blocks(),
-                             filename, {})
+    log_remote_id.write_csv(make_rid_msg(_data_json(), golden.payload(), golden.valid_blocks(), {}), filename)
     header, data_row = _read_csv(filename)
     row = dict(zip(header, data_row))
     assert row['manufacturer'] == ''

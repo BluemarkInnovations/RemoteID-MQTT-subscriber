@@ -5,6 +5,8 @@ from datetime import datetime, timezone
 import pytest
 
 from modules import open_drone_id as odid
+from modules import decode
+from conftest import make_rid_msg
 
 
 # ---------------------------------------------------------------------------
@@ -234,7 +236,7 @@ def test_decode_valid_blocks_independent_across_two_instances():
 
 def test_print_basicID0_ascii_id(payload_builder, capsys):
     payload = payload_builder.basic_id(0, 2, 1, ("SN" + "1" * 30)[:21]).build()
-    odid.print_basicID0(payload)
+    odid.print_basicID0(decode.decode_uas_data(payload).basic_id[0])
     out = capsys.readouterr().out
     assert "Helicopter (or Multirotor)" in out
     assert "Serial Number" in out
@@ -245,7 +247,7 @@ def test_print_basicID1_uses_idtype_not_uatype(payload_builder, capsys):
     # UAType_1 == 3 (not 1 or 2); IDType_1 == 2 (is 1 or 2) -> must decode as ASCII
     id_str = ("CAAID" + "9" * 30)[:21]
     payload = payload_builder.basic_id(1, 3, 2, id_str).build()
-    odid.print_basicID1(payload)
+    odid.print_basicID1(decode.decode_uas_data(payload).basic_id[1])
     out = capsys.readouterr().out
     assert "Gyroplane" in out
     assert "CAA Registration ID" in out
@@ -260,7 +262,7 @@ def test_print_basicID1_hex_id_when_idtype_not_ascii(payload_builder, capsys):
     # overwrite with raw (non-ascii-safe) bytes for the ID field
     offset = 32 + 8
     payload[offset:offset + 21] = raw_id
-    odid.print_basicID1(bytes(payload))
+    odid.print_basicID1(decode.decode_uas_data(bytes(payload)).basic_id[1])
     out = capsys.readouterr().out
     assert raw_id.hex() in out
 
@@ -277,7 +279,7 @@ def test_print_Location_normal_values(payload_builder, capsys):
         vert_accuracy=4, baro_accuracy=4, speed_accuracy=2, ts_accuracy=5,
         timestamp=30.5,
     ).build()
-    odid.print_Location(payload)
+    odid.print_Location(decode.decode_uas_data(payload).location)
     out = capsys.readouterr().out
     assert "Airborne" in out
     assert "45.0" in out
@@ -292,7 +294,7 @@ def test_print_Location_normal_values(payload_builder, capsys):
 
 def test_print_Location_clamps_invalid_lat_lon_to_nan(payload_builder, capsys):
     payload = payload_builder.location(latitude=0.0, longitude=200.0).build()
-    odid.print_Location(payload)
+    odid.print_Location(decode.decode_uas_data(payload).location)
     out = capsys.readouterr().out
     assert "Latitude...... nan" in out
     assert "Longitude...... nan" in out
@@ -300,7 +302,7 @@ def test_print_Location_clamps_invalid_lat_lon_to_nan(payload_builder, capsys):
 
 def test_print_Location_invalid_timestamp(payload_builder, capsys):
     payload = payload_builder.location(timestamp=0.0).build()
-    odid.print_Location(payload)
+    odid.print_Location(decode.decode_uas_data(payload).location)
     out = capsys.readouterr().out
     assert "Timestamp......invalid" in out
 
@@ -312,7 +314,7 @@ def test_print_Location_invalid_timestamp(payload_builder, capsys):
 def test_print_SelfID(payload_builder, capsys):
     desc = ("Emergency landing" + " " * 30)[:23]
     payload = payload_builder.self_id(desc_type=1, desc=desc).build()
-    odid.print_SelfID(payload)
+    odid.print_SelfID(decode.decode_uas_data(payload).self_id)
     out = capsys.readouterr().out
     assert "Emergency" in out
     assert desc in out
@@ -326,7 +328,7 @@ def test_print_System_valid_timestamp(payload_builder, capsys):
         category_eu=2, class_eu=3, operator_altitude_geo=110.0,
         timestamp=12345678,
     ).build()
-    odid.print_System(payload)
+    odid.print_System(decode.decode_uas_data(payload).system)
     out = capsys.readouterr().out
     assert "Dynamic" in out
     assert "European Union" in out
@@ -338,7 +340,7 @@ def test_print_System_valid_timestamp(payload_builder, capsys):
 
 def test_print_System_invalid_timestamp(payload_builder, capsys):
     payload = payload_builder.system(timestamp=0).build()
-    odid.print_System(payload)
+    odid.print_System(decode.decode_uas_data(payload).system)
     out = capsys.readouterr().out
     assert "Timestamp......invalid" in out
 
@@ -346,7 +348,7 @@ def test_print_System_invalid_timestamp(payload_builder, capsys):
 def test_print_OperatorID(payload_builder, capsys):
     op_id = ("OP" + "5" * 30)[:20]
     payload = payload_builder.operator_id(operator_id_type=0, operator_id=op_id).build()
-    odid.print_OperatorID(payload)
+    odid.print_OperatorID(decode.decode_uas_data(payload).operator_id)
     out = capsys.readouterr().out
     assert "Operator ID" in out
     assert op_id in out
@@ -367,14 +369,14 @@ def test_print_AuthPage_page0_and_last_page(payload_builder, capsys):
     )
     payload = builder.build()
 
-    odid.print_AuthPage(payload, 0)
+    odid.print_AuthPage(decode.decode_uas_data(payload), 0)
     out0 = capsys.readouterr().out
     assert "UAS ID Signature" in out0
     assert page0_data.hex() in out0
     expected_ts = datetime.fromtimestamp(1000 + 1546300800, tz=timezone.utc).strftime('%Y-%m-%d %H:%M %Z')
     assert expected_ts in out0
 
-    odid.print_AuthPage(payload, 1)
+    odid.print_AuthPage(decode.decode_uas_data(payload), 1)
     out1 = capsys.readouterr().out
     assert page1_data.hex() in out1
     # must be truncated to (Length-17)%23 == 5 bytes, not the full 23-byte page
@@ -404,7 +406,7 @@ def test_print_payload_full_message(golden, capsys):
         'weight': 1.5, 'dimensions': '400x400x150',
     }
 
-    odid.print_payload(payload, valid_blocks, data_json, extra_json)
+    odid.print_payload(make_rid_msg(data_json, payload, valid_blocks, extra_json))
     out = capsys.readouterr().out
 
     assert "DS-TEST-1" in out
