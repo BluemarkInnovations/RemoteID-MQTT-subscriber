@@ -1,6 +1,9 @@
 from bitstruct import *
 import socket
+import struct
 import config
+
+sbs_connection = None # one SBS client at a time, set by connect()
 
 def connect(name):
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
@@ -38,23 +41,26 @@ def callsign(data):
     return callsign
 
 def transmit(data):
+    global sbs_connection
+    if sbs_connection is None: # no client connected (yet), or the last one disconnected
+        return
     try:
         sbs_connection.sendall(bytes(data,"ascii"))
 
     except (OSError, socket.error) as e:
-        print("Error:", e)
-        # reset connection
-        sbs_connection.setsockopt(socket.SOL_SOCKET, socket.SO_LINGER, struct.pack('ii', 1, 0))
-        sbs_connection.close()
+        print("SBS client disconnected:", e)
+        # reset connection, connect() accepts the next client
+        try:
+            sbs_connection.setsockopt(socket.SOL_SOCKET, socket.SO_LINGER, struct.pack('ii', 1, 0))
+            sbs_connection.close()
+        except OSError:
+            pass
+        sbs_connection = None
     return
 
 def export(payload, valid_blocks):
 
-    try:
-        sbs_connection
-    except NameError:
-        pass
-    else:
+    if sbs_connection is not None:
         output_str = ""
         if valid_blocks.BasicID0_valid == 1:
             #send MSG 1 identification
