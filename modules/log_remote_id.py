@@ -1,4 +1,5 @@
 import csv
+from modules import csv_file
 from datetime import datetime, timezone
 
 def open_csv(log_path):
@@ -123,7 +124,4 @@ def write_csv(msg, filename):
     else:
         row += [''] * 7
 
-    with open(filename, 'a', newline='', encoding='utf-8') as csvfile:
-        csv_writer = csv.writer(csvfile, delimiter=',',
-                                quotechar='"', quoting=csv.QUOTE_NONNUMERIC)
-        csv_writer.writerow(row)
+    csv_file.append_row(filename, row)

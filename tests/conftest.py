@@ -304,8 +304,9 @@ def make_rid_msg(data_json, payload, valid_blocks=None, extra_json=None):
 
 @pytest.fixture(autouse=True)
 def _no_exporters_left_over():
-    """Every test starts and ends without registered exporters."""
-    from modules import exporters
+    """Every test starts and ends without registered exporters or open CSV files."""
+    from modules import exporters, csv_file
     exporters.shutdown()
     yield
     exporters.shutdown()
+    csv_file.close_all()

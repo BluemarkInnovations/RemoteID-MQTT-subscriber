@@ -1,4 +1,5 @@
 import csv
+from modules import csv_file
 from datetime import datetime, timezone
 
 def decode_flight_state(state):
@@ -228,13 +229,9 @@ def write_csv(msg, filename):
     data_json = msg.json
     aircraft_data = msg.raw
 
-    with open(filename, 'a', newline='', encoding='utf-8') as csvfile:
-        csv_writer = csv.writer(csvfile, delimiter=',',
-                                quotechar='"', quoting=csv.QUOTE_NONNUMERIC)
-        #write row
-        epoch_timestamp = datetime.fromtimestamp(data_json.get('timestamp')/1000, tz=timezone.utc)
+    epoch_timestamp = datetime.fromtimestamp(data_json.get('timestamp')/1000, tz=timezone.utc)
 
-        csv_writer.writerow([data_json.get('sensor ID'), data_json.get('timestamp'),
+    csv_file.append_row(filename, [data_json.get('sensor ID'), data_json.get('timestamp'),
             epoch_timestamp.strftime('%Y-%m-%d %H:%M:%S.%f')[:-4], data_json.get('frequency MHz'), data_json.get('RSSI'), data_json.get('type'), data_json.get('address'), data_json.get('address type')
             , data_json.get('flight'), data_json.get('emergency status'), data_json.get('flight state'), data_json.get('category'),  data_json.get('altitude'), data_json.get('altitude type'), data_json.get('speed'), data_json.get('track')
             , data_json.get('vertical rate'), data_json.get('message count'), data_json.get('latitude'), data_json.get('longitude')

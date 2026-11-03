@@ -144,3 +144,19 @@ def test_open_csv_write_csv_round_trip(tmp_path):
     assert 'DS-TEST-1' in data_row
     assert '4A1B2C' in data_row
 
+
+def test_csv_rows_are_on_disk_immediately_and_file_is_reopened(tmp_path):
+    from modules import csv_file
+    filename = aircraft.open_csv(str(tmp_path))
+    aircraft.write_csv(decode.decode_aircraft(_aircraft_json()), filename)
+    with open(filename) as f:
+        assert len(f.read().splitlines()) == 2        # header + row, without closing the file
+    # the log file is moved away (e.g. by the user): the next row goes into a new file
+    import os
+    os.rename(filename, filename + '.old')
+    aircraft.write_csv(decode.decode_aircraft(_aircraft_json()), filename)
+    with open(filename) as f:
+        assert len(f.read().splitlines()) == 1
+    with open(filename + '.old') as f:
+        assert len(f.read().splitlines()) == 2
+    csv_file.close_all()
