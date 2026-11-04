@@ -433,3 +433,29 @@ def test_no_deprecation_warning_on_paho2(monkeypatch, no_auth):
         mqtt_sub.connect_mqtt()
 
     assert [w for w in caught if issubclass(w.category, DeprecationWarning)] == []
+
+
+def _connack_reason_code(name):
+    """The object paho 2.x passes to on_connect as rc."""
+    if not hasattr(mqtt_sub.mqtt_client, 'CallbackAPIVersion'):
+        pytest.skip("paho 1.x passes rc as an int")
+    from paho.mqtt.packettypes import PacketTypes
+    from paho.mqtt.reasoncodes import ReasonCode
+    return ReasonCode(PacketTypes.CONNACK, name)
+
+
+def test_reason_code_success_subscribes(fake_client):
+    rc = _connack_reason_code("Success")
+
+    fake_client.on_connect(fake_client, None, {}, rc, None)
+
+    assert fake_client.subscribed_topics == [config.topic]
+
+
+def test_reason_code_refused_does_not_subscribe(fake_client, capsys):
+    rc = _connack_reason_code("Not authorized")
+
+    fake_client.on_connect(fake_client, None, {}, rc, None)
+
+    assert fake_client.subscribed_topics == []
+    assert "Failed to connect, return code Not authorized" in capsys.readouterr().out
