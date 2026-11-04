@@ -2,6 +2,7 @@ import base64
 import csv
 import json
 import lzma
+import warnings
 
 import pytest
 
@@ -376,3 +377,59 @@ def test_malformed_payload_does_not_raise(dummy_client):
 
 def test_empty_payload_does_not_raise(dummy_client):
     _send(dummy_client, b'')
+
+
+class FakeMqttClient(DummyClient):
+    """Stands in for the paho Client, no network."""
+    def __init__(self, *args, **kwargs):
+        super().__init__()
+        self.on_connect = None
+
+    def connect(self, host, port):
+        pass
+
+
+@pytest.fixture
+def no_auth(monkeypatch):
+    monkeypatch.delattr(config, 'username', raising=False)
+    monkeypatch.delattr(config, 'client_pem', raising=False)
+
+
+@pytest.fixture
+def fake_client(monkeypatch, no_auth):
+    monkeypatch.setattr(mqtt_sub.mqtt_client, 'Client', FakeMqttClient)
+    return mqtt_sub.connect_mqtt()
+
+
+def test_subscribes_once_and_only_after_on_connect(fake_client):
+    assert fake_client.subscribed_topics == []
+
+    fake_client.on_connect(fake_client, None, {}, 0)
+
+    assert fake_client.subscribed_topics == [config.topic]
+
+
+@pytest.mark.parametrize('extra_args', [(), (None,)], ids=['paho1', 'paho2'])
+def test_on_connect_accepts_both_paho_signatures(fake_client, extra_args):
+    fake_client.on_connect(fake_client, None, {}, 0, *extra_args)
+
+    assert fake_client.subscribed_topics == [config.topic]
+
+
+def test_refused_connection_does_not_subscribe(fake_client, capsys):
+    fake_client.on_connect(fake_client, None, {}, 5)
+
+    assert fake_client.subscribed_topics == []
+    assert "Failed to connect, return code 5" in capsys.readouterr().out
+
+
+def test_no_deprecation_warning_on_paho2(monkeypatch, no_auth):
+    if not hasattr(mqtt_sub.mqtt_client, 'CallbackAPIVersion'):
+        pytest.skip("paho 1.x has no callback API versions")
+    monkeypatch.setattr(mqtt_sub.mqtt_client.Client, 'connect', lambda self, *args, **kwargs: 0)
+
+    with warnings.catch_warnings(record=True) as caught:
+        warnings.simplefilter('always')
+        mqtt_sub.connect_mqtt()
+
+    assert [w for w in caught if issubclass(w.category, DeprecationWarning)] == []
