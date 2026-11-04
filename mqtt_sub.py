@@ -37,17 +37,18 @@ class open_drone_id_valid_blocks():
         self.AuthValid = [0] * 16 # max 13 pages up to 255 bytes data
 
 def connect_mqtt() -> mqtt_client:
-    if hasattr(mqtt_client, 'CallbackAPIVersion'): #Set API V1 if a new paho mqtt is installed. See https://eclipse.dev/paho/files/paho.mqtt.python/html/migrations.html
-        client = mqtt_client.Client(mqtt_client.CallbackAPIVersion.VERSION1,config.client_id)
+    if hasattr(mqtt_client, 'CallbackAPIVersion'): #Set API V2 if a new paho mqtt is installed. See https://eclipse.dev/paho/files/paho.mqtt.python/html/migrations.html
+        client = mqtt_client.Client(mqtt_client.CallbackAPIVersion.VERSION2,config.client_id)
     else:
         client = mqtt_client.Client(config.client_id)
 
-    def on_connect(client, userdata, flags, rc):
+    # paho 2.x also passes properties, and rc is a ReasonCode that still compares to 0
+    def on_connect(client, userdata, flags, rc, properties=None):
         if rc == 0:
             print("Connected to MQTT Broker!")
             subscribe(client)
         else:
-            print("Failed to connect, return code %d\n", rc)
+            print("Failed to connect, return code", rc)
 
     #if username and password is set
     if hasattr(config, 'username'):
@@ -68,7 +69,6 @@ def connect_mqtt() -> mqtt_client:
     client.on_connect = on_connect
     client.connect(config.broker, config.port)
 
-    subscribe(client)
     return client
 
 
