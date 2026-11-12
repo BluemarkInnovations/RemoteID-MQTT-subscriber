@@ -1,0 +1,3 @@
+# sapient_gateway.py: protobuf runtime for the generated sapient_msg/*_pb2.py
+# (generated with grpcio-tools 1.62.3, tested with protobuf 4.25.9 and 5.29.4)
+protobuf>=4.25

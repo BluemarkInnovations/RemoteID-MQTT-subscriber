@@ -1,0 +1,36 @@
+# Test TAK server: FreeTAKServer 2.2.1 (open source, EPL-2.0), see Dockerfile.freetakserver.
+# For development and testing only; ports are published on localhost only.
+#
+#   docker compose -f integrations/tak/docker/compose.yaml up -d --build
+#   python3 integrations/tak/tools/send_test_events.py tcp://127.0.0.1:8087 --verify
+#   docker compose -f integrations/tak/docker/compose.yaml down        # add -v to drop the data volume
+#
+# A real customer TAK Server (tak.gov) behaves differently in places (TLS with client
+# certificates on 8089, groups); always repeat the test there.
+name: dronescout-tak-test
+
+services:
+  freetakserver:
+    build:
+      context: .
+      dockerfile: Dockerfile.freetakserver
+    image: dronescout-test/freetakserver:2.2.1
+    restart: unless-stopped
+    volumes:
+      - fts-data:/opt/fts/
+    ports:
+      - "127.0.0.1:8087:8087"     # CoT, plain TCP
+      - "127.0.0.1:8089:8089"     # CoT, TLS
+      - "127.0.0.1:19023:19023"   # REST API (FTS UI / web map)
+    environment:
+      FTS_COT_PORT: 8087
+      FTS_SSLCOT_PORT: 8089
+      FTS_API_PORT: 19023
+      FTS_DP_ADDRESS: 127.0.0.1
+      FTS_USER_ADDRESS: 127.0.0.1
+      FTS_API_ADDRESS: 0.0.0.0
+      FTS_CONNECTION_MESSAGE: "DroneScout test server"
+      FTS_LOG_LEVEL: info
+
+volumes:
+  fts-data:

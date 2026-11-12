@@ -317,3 +317,18 @@ def decode_aircraft(aircraft_json):
     sbs = aircraft_json.get('SBS')
     sbs_lines = _strip_terminator(sbs).split(';') if isinstance(sbs, str) and sbs else []
     return AircraftMessage(json=aircraft_json, raw=raw, sbs_lines=sbs_lines)
+
+
+def drone_id(msg):
+    """Stable ID of a drone (RemoteIDMessage): serial number, else another valid
+    basic ID (ASCII, or hex for binary IDs), else the MAC address without colons.
+    Used as the object key by the TAK, SAPIENT and ASTERIX outputs."""
+    uas = msg.uas
+    if uas.serial_number:
+        return uas.serial_number
+    for b in uas.basic_id:
+        if b.valid and b.id_type != 0:
+            text = b.id_text if b.is_text else b.id_raw.rstrip(b'\x00').hex()
+            if text:
+                return text
+    return (msg.mac_address or '').replace(':', '')

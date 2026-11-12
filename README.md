@@ -8,7 +8,7 @@ DroneScout receivers detect broadcast/direct drone Remote ID signals (Bluetooth,
 \#OpenDroneID \#RemoteID \#FAA \#F3411 \#EASA \#DIN_EN_4709-002 \#dronetechnology
 
 ## Installation
-The code is Python3 (3.6+) code. It needs these dependencies (tested under Ubuntu):
+The code is Python3 (3.7+) code. It needs these dependencies (tested under Ubuntu):
 
 ```
 sudo apt install python3-paho-mqtt python3-bitstruct
@@ -61,8 +61,19 @@ Note: for exporting data, the normal Serial Number of RemoteID is too long. It i
 
 ![RemoteID_data_in_Virtual_Radar_Server_2](./img/virtual_radar_server_remote_id_2.jpg)
 
+### Integrations: TAK, SAPIENT, ASTERIX, REST and UDP
+Gateways in [`integrations/`](integrations/README.md) pass the detections on to other systems:
+
+- [TAK](integrations/tak/README.md) (ATAK, WinTAK, iTAK, TAK Server): Cursor-on-Target map markers for drones, pilots, aircraft and sensors
+- [SAPIENT](integrations/sapient/README.md) (BSI Flex 335 v2.0): every sensor as a SAPIENT node at a fusion node / DMM
+- [ASTERIX](integrations/asterix/README.md): CAT021, CAT023, CAT129 (UAS identification), CAT062 and CAT065 over UDP
+- [REST](integrations/rest/README.md): JSON over HTTP(S) POST with bearer, basic or API-key authentication
+- [UDP](integrations/udp/README.md): one JSON datagram per event, multicast / broadcast / unicast on the local network
+
+Each has its own README, settings file, test tools and (except UDP) a Docker test server.
+
 ## Testing
-The repository has a pytest suite covering the opendroneid/aircraft message decoding, CSV export and MQTT message routing. Install the extra test dependency and run it from the repository root:
+The repository has a pytest suite covering the opendroneid/aircraft message decoding, CSV export, MQTT message routing and the integrations. Install the extra test dependencies and run it from the repository root (see [integrations/README.md](integrations/README.md#unit-tests) for the SAPIENT and ASTERIX dependencies):
 
 ```
 pip3 install -r requirements-dev.txt

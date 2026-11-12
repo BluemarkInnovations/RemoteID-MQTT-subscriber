@@ -1,0 +1,8 @@
+# REST test receiver: example_receiver.py needs only the Python standard library. The repository
+# is mounted at /app (compose.yaml), so the image always runs the current example_receiver.py.
+FROM python:3.11-slim
+
+RUN useradd --create-home --uid 1000 rest
+USER rest
+WORKDIR /app
+ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1

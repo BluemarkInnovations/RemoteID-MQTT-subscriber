@@ -1,0 +1,27 @@
+# REST test receiver: example_receiver.py with bearer token authentication on
+# http://127.0.0.1:8080/dronescout/events. For development and testing only (plain HTTP);
+# the port is published on localhost only.
+#
+#   REST_TOKEN=change-me docker compose -f integrations/rest/docker/compose.yaml up -d --build
+#   python3 integrations/rest/tools/send_test_events.py http://127.0.0.1:8080/dronescout/events --token change-me
+#   docker compose -f integrations/rest/docker/compose.yaml logs -f receiver
+#   docker compose -f integrations/rest/docker/compose.yaml down
+#
+# Basic or API-key authentication instead: change the command, e.g.
+#   ["--auth", "basic", "--username", "dronescout", "--password", "change-me"]
+#   ["--auth", "header", "--header-name", "X-API-Key", "--header-value", "change-me"]
+name: dronescout-rest-test
+
+services:
+  receiver:
+    build:
+      context: .
+      dockerfile: Dockerfile.receiver
+    image: dronescout-test/rest-receiver
+    restart: unless-stopped
+    volumes:
+      - ../../..:/app:ro              # repository root
+    ports:
+      - "127.0.0.1:8080:8080"
+    entrypoint: ["python3", "integrations/rest/tools/example_receiver.py", "--bind", "0.0.0.0", "--port", "8080"]
+    command: ["--auth", "bearer", "--token", "${REST_TOKEN:-change-me}"]

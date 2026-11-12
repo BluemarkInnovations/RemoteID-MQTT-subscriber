@@ -1,0 +1,2 @@
+# ASTERIX gateway: pure Python, needs Python >= 3.10
+libasterix==0.37.0

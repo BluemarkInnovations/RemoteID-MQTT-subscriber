@@ -1,0 +1,11 @@
+# ASTERIX test receiver: Python + libasterix. The repository is mounted at /app (compose.yaml),
+# so the image only holds the dependencies and always runs the current asterix_dump.py.
+FROM python:3.11-slim
+
+RUN pip install --no-cache-dir libasterix==0.37.0 \
+ && useradd --create-home --uid 1000 asterix \
+ && mkdir /captures && chown asterix /captures
+USER asterix
+WORKDIR /app
+ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1
+CMD ["python3", "integrations/asterix/tools/asterix_dump.py", "--port", "8600", "--pcap", "/captures/asterix.pcap"]

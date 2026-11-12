@@ -1,0 +1,46 @@
+# ASTERIX test receiver: decodes CAT021/023/062/065/129 from UDP port 8600, prints every record
+# and writes /captures/asterix.pcap to open in Wireshark (Decode As: UDP 8600 -> ASTERIX).
+# For development and testing only; the port is published on localhost only.
+#
+#   docker compose -f integrations/asterix/docker/compose.yaml up -d --build
+#   python3 integrations/asterix/tools/send_test_events.py 127.0.0.1:8600 --all-categories --duration 20
+#   docker compose -f integrations/asterix/docker/compose.yaml logs -f receiver
+#   docker compose -f integrations/asterix/docker/compose.yaml cp receiver:/captures/asterix.pcap .
+#   docker compose -f integrations/asterix/docker/compose.yaml down
+#
+# Multicast: Docker's port publishing only forwards unicast. For a multicast test, use the
+# "receiver-multicast" profile (host network, joins ASTERIX_GROUP:ASTERIX_PORT, default
+# 239.255.86.0:8601, another port than the unicast receiver):
+#   ASTERIX_GROUP=239.255.86.0 docker compose -f integrations/asterix/docker/compose.yaml --profile multicast up -d --build
+#   python3 integrations/asterix/tools/send_test_events.py 239.255.86.0:8601 --duration 10
+name: dronescout-asterix-test
+
+services:
+  receiver:
+    build:
+      context: .
+      dockerfile: Dockerfile.receiver
+    image: dronescout-test/asterix-receiver:0.37.0
+    restart: unless-stopped
+    volumes:
+      - ../../..:/app:ro              # repository root
+      - captures:/captures
+    ports:
+      - "127.0.0.1:8600:8600/udp"
+
+  receiver-multicast:
+    profiles: ["multicast"]
+    image: dronescout-test/asterix-receiver:0.37.0
+    build:
+      context: .
+      dockerfile: Dockerfile.receiver
+    restart: unless-stopped
+    network_mode: host
+    volumes:
+      - ../../..:/app:ro
+      - captures:/captures
+    command: ["python3", "integrations/asterix/tools/asterix_dump.py", "--port", "${ASTERIX_PORT:-8601}",
+              "--group", "${ASTERIX_GROUP:-239.255.86.0}", "--pcap", "/captures/asterix-multicast.pcap"]
+
+volumes:
+  captures:

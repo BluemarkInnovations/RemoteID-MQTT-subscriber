@@ -1,0 +1,26 @@
+# SAPIENT test middleware: Dstl Apex with all BSI Flex 335 v2.0 validations on (apex_config.json).
+# For development and testing only; ports are published on localhost only.
+#
+#   docker compose -f integrations/sapient/docker/compose.yaml up -d --build
+#   python3 integrations/sapient/tools/send_test_events.py tcp://127.0.0.1:5020 --verify-peer 127.0.0.1:5001
+#   docker compose -f integrations/sapient/docker/compose.yaml logs apex      # validation errors show up here
+#   docker compose -f integrations/sapient/docker/compose.yaml down
+name: dronescout-sapient-test
+
+services:
+  apex:
+    build:
+      context: .
+      dockerfile: Dockerfile.apex
+    image: dronescout-test/apex-sapient:0c8591a
+    restart: unless-stopped
+    volumes:
+      - ./apex_config.json:/config/apex_config.json:ro
+      - apex-data:/apex/data
+    working_dir: /apex/data          # Apex writes its SQLite archive to the working directory
+    ports:
+      - "127.0.0.1:5020:5020"        # edge nodes (Child), BSI Flex 335 v2.0
+      - "127.0.0.1:5001:5001"        # DMM / fusion node (Peer), receives the validated messages
+
+volumes:
+  apex-data:

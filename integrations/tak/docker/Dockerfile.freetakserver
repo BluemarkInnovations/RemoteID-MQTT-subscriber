@@ -1,0 +1,26 @@
+# FreeTAKServer 2.2.1 from PyPI, with the dependencies pinned to versions from its release
+# time (May 2024): newer opentelemetry-sdk releases break its start-up.
+FROM python:3.11-slim
+
+RUN groupadd -r freetak && useradd -m -r -g freetak freetak \
+    && mkdir /opt/fts && chown freetak:freetak /opt/fts
+USER freetak
+WORKDIR /home/freetak
+ENV PATH=/home/freetak/.local/bin:$PATH \
+    FTS_DATA_PATH=/opt/fts/
+
+RUN pip install --no-cache-dir --user "ruamel.yaml<0.18" \
+    && pip install --no-cache-dir --user FreeTAKServer==2.2.1 \
+       "opentelemetry-api==1.24.0" "opentelemetry-sdk==1.24.0" "opentelemetry-semantic-conventions==0.45b0"
+
+COPY --chown=freetak:freetak --chmod=755 <<'SH' /home/freetak/run.sh
+#!/bin/sh
+set -e
+if [ ! -f /opt/fts/FTSConfig.yaml ]; then
+    python -c "from FreeTAKServer.core.configuration.configuration_wizard import autogenerate_config; autogenerate_config()"
+fi
+exec python -m FreeTAKServer.controllers.services.FTS
+SH
+
+VOLUME /opt/fts
+CMD ["/home/freetak/run.sh"]

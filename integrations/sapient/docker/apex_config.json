@@ -1,0 +1,36 @@
+{
+  "logLevel": "INFO",
+  "connections": [
+    {"type": "Child", "port": 5020, "format": "PROTO", "icd_version": "BSI Flex 335 v2.0"},
+    {"type": "Peer", "port": 5001, "format": "PROTO", "icd_version": "BSI Flex 335 v2.0"}
+  ],
+  "elasticConfig": {"enabled": false, "host": "localhost", "port": 9200, "useSsl": true,
+                    "certLocation": "", "user": "elastic", "password": "password"},
+  "apiConfig": {"host": "127.0.0.1", "port": 8080},
+  "enableTimeSyncAdjustment": false,
+  "messageMaxSizeKb": 1024,
+  "detectionConfidenceFiltering": {"enable": false, "threshold": 0.5, "storeInDatabase": true},
+  "middlewareId": "5913c0f4-9f89-4c01-ab90-939099797c4f",
+  "enableMessageConversion": false,
+  "autoAssignSensorIDInRegistration": {"enable": false, "startingID": 1000001, "staticNodeIds": {}},
+  "allowPeerRegistration": true,
+  "sendRegistrationAck": true,
+  "rollover": {"enable": false, "unit": "days", "value": 1},
+  "validationOptions": {
+    "validationTypes": [
+      "mandatory_fields_present",
+      "mandatory_oneof_present",
+      "mandatory_repeated_present",
+      "no_unknown_fields",
+      "no_unknown_enum_values",
+      "id_format_valid",
+      "message_timestamp_reasonable",
+      "detection_timestamp_reasonable",
+      "supported_icd_version"
+    ],
+    "strictIdFormat": true,
+    "messageTimestampRange": [-0.9, 0.1],
+    "detectionMinimumGap": 0.08,
+    "supportedIcdVersions": ["BSI Flex 335 v2.0"]
+  }
+}
