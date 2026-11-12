@@ -116,6 +116,19 @@ it shows CAT129 records without their items.
 sending to a customer's system, agree on SAC / SIC and the categories, and test with the
 consumer: decoders differ in which editions they accept.
 
+### Replay of recorded logs
+
+```
+python3 integrations/asterix/tools/replay_check.py logs/*_remoteID_log.csv logs/*_aircraft_log.csv
+```
+
+Replays the subscriber's CSV logs through the encoder (CAT021, CAT062, CAT129), decodes every
+record again (libasterix; CAT129 with our decoder) and compares address, callsign, position,
+altitude, speed and track with the CSV, within each item's resolution. Result: all
+logs (61,499 rows): 41,507 CAT021, 61,434 CAT062 and 18,662 CAT129 records, every value within the
+resolution of its item. Rows that are not encoded on purpose: ADS-L / FLARM in CAT021, and
+positions without a fix.
+
 ### Unit tests
 
 ```
@@ -132,4 +145,5 @@ python3 -m pytest -q integrations/asterix          # skipped without libasterix
 | `asterix_map.py` | ASTERIX records from decoded messages, the CAT129 encoder and decoder |
 | `tools/asterix_dump.py` | receiver / decoder with pcap output |
 | `tools/send_test_events.py` | made-up objects as ASTERIX, `--verify` |
+| `tools/replay_check.py` | recorded logs through the encoder, compared with the CSV |
 | `docker/` | the receiver in Docker |

@@ -58,6 +58,7 @@ class Node:
         self.status_changed = True
         self.last_heartbeat = None
         self.last_detection = 0.0
+        self.last_stamp = 0.0               # timestamp (wall clock) of the last detection sent
         self.pending = collections.OrderedDict()    # key -> SapientMessage (detection)
         self.tracks = {}                             # object key -> Track
         self.sent = 0
@@ -357,14 +358,18 @@ class SAPIENTExporter(exporters.Exporter):
                     node.last_heartbeat = now
                 else:
                     continue
-            if now - node.last_detection >= self.detection_gap_s:
+            # the gap is checked on the timestamps themselves (Apex checks those): with many nodes
+            # a pump round takes a while, so the round's start time isn't the send time
+            stamp = time.time()
+            if now - node.last_detection >= self.detection_gap_s and stamp - node.last_stamp >= self.detection_gap_s:
                 with self._lock:
                     item = node.pending.popitem(last=False) if node.pending else None
                 if item is not None:
                     message = item[1]
-                    message.timestamp.CopyFrom(smap._ts(time.time()))     # the send time
+                    message.timestamp.CopyFrom(smap._ts(stamp))     # the send time
                     if self._send(node, message):
                         node.last_detection = now
+                        node.last_stamp = stamp
 
     def _pump_loop(self):
         while not self._closed:

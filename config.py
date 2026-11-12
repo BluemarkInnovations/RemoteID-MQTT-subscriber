@@ -30,3 +30,10 @@ client_id = f'mqtt-subscriber-{random.randint(0, 100)}'
 #Export data to Virtual Radar Server or FlightAirMap that support sources with SBS BaseStation output
 #sbs_server_ip_address = "0.0.0.0"  # Standard loopback interface address (localhost)
 #sbs_server_port = 30003  # port
+
+# Manual fallback position of sensors without GPS (no LTE add-on) or without a GPS fix:
+# latitude, longitude, altitude MSL (m). Used by the outputs (TAK, SAPIENT, FLARM, ...) while a
+# sensor sends no location message with a valid fix (for 3 minutes); a GPS position always wins.
+#sensor_locations = {
+#    'ds02261000000948': (52.21852, 6.97486, 30.0),
+#}

@@ -213,13 +213,17 @@ class TAKExporter(exporters.Exporter):
         self._last_sent = {}
         self._clock = clock
 
-    def _send(self, uid, data):
-        if data is None:
-            return
+    def _send(self, uid, build):
+        """Send build() (CoT bytes, or None: nothing to send) unless uid was sent within
+        min_interval_s. The rate limit is checked first: most updates are dropped by it, and
+        building the XML is the expensive part."""
         now = self._clock()
         last = self._last_sent.get(uid)
         if last is not None and now - last < self.min_interval_s:
             self.rate_limited += 1
+            return
+        data = build()
+        if data is None:
             return
         self._last_sent[uid] = now
         if len(self._last_sent) > 10000:      # forget objects not seen for a while
@@ -228,13 +232,13 @@ class TAKExporter(exporters.Exporter):
         self.client.send(data)
 
     def on_remote_id(self, msg):
-        self._send(cot.drone_uid(msg), cot.drone_event(msg, self.settings))
+        self._send(cot.drone_uid(msg), lambda: cot.drone_event(msg, self.settings))
         if self.send_operator:
-            self._send('dronescout-op-' + cot.drone_id(msg), cot.operator_event(msg, self.settings))
+            self._send('dronescout-op-' + cot.drone_id(msg), lambda: cot.operator_event(msg, self.settings))
 
     def on_aircraft(self, msg):
         if self.send_aircraft:
-            self._send(cot.aircraft_uid(msg), cot.aircraft_event(msg, self.settings))
+            self._send(cot.aircraft_uid(msg), lambda: cot.aircraft_event(msg, self.settings))
 
     def _send_sensor(self, sensor_id):
         position = self.sensor_positions.get(sensor_id)

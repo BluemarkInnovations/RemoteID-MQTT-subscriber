@@ -86,6 +86,9 @@ Shared code in `modules/`:
 - `decode.pseudo_icao()` / `decode.short_callsign()`: the `FF....` address and 8-character
   callsign of a drone, shared by the SBS, GDL90 and FLARM outputs.
 - `test_objects.py`: the synthetic test drone, aircraft and sensor used by `send_test_events.py`.
+- `sensor_locations.py`: manual fallback position of sensors without GPS (`sensor_locations` in
+  `config.py`), handed to every output as the sensor's location message.
+- `replay.py`: turns the subscriber's CSV logs back into MQTT messages (replay, load test).
 
 ## Testing without sensors
 
@@ -114,6 +117,30 @@ etdey/gdl90, pynmea2; the CS-RID SDSP uses cbor2, pycose and aiocoap), so the te
 fusion node, an ATM system) can behave differently: always repeat the test there with
 `send_test_events.py` before switching to real data.
 
+## Real data and load
+
+`modules/replay.py` turns the CSV logs (`log_path`) back into DroneScout messages: decoding a
+replayed message gives the values of the CSV row (checked on 61,499 logged rows).
+
+- `integrations/asterix/tools/replay_check.py`: replays logs through the ASTERIX encoder and
+  compares the decoded records with the CSV (see the ASTERIX README).
+- `tools/load_test.py`: replays logs at N x speed, optionally as N copies (other sensors, drones
+  and aircraft), through `mqtt_sub`'s message handling into all outputs at once, against the
+  Docker test servers. Reports per output: messages, queue drops, hand-off latency, CPU time.
+
+```
+python3 tools/load_test.py --speed 10 --duration 120               # the largest RemoteID + ADS-B log
+python3 tools/load_test.py --speed 20 --copies 10 --duration 120   # stress: ~20 x the busiest log
+```
+
+Result (all 9 outputs in one process; in production each gateway is its own process),
+on the largest logs (a RemoteID log with 17,606 rows, an ADS-B log with 15,995 rows):
+
+| Run | Messages/s | CPU (one core) | Dropped | Hand-off p99 |
+|---|---|---|---|---|
+| 10x speed | 51 | 7 % | 0 | 2 ms |
+| 20x speed, 10 copies | 1,304 | 35 % | 0 | 4-8 ms |
+
 ## Unit tests
 
 From the repository root, with the dependencies of all integrations installed:
@@ -127,3 +154,32 @@ python3 -m venv .venv
 
 The ASTERIX tests are skipped when `libasterix` is missing (it needs Python 3.10 or newer).
 The tests run against local mock servers; none of them needs Docker or the network.
+
+## Licences
+
+The repository is MIT licensed. What the gateways use or include (checked 2026-11-12):
+
+| Component | Used by | Licence | How |
+|---|---|---|---|
+| paho-mqtt | all | EPL-2.0 or BSD-3-Clause (EDL 1.0), our choice | pip dependency |
+| bitstruct | all | MIT | pip dependency |
+| protobuf | SAPIENT | BSD-3-Clause | pip dependency |
+| SAPIENT proto files, BSI Flex 335 v2.0 (dstl/SAPIENT-Proto-Files) | SAPIENT | Apache 2.0, Crown copyright | **included**: `sapient/sapient_msg/` with the generated Python classes; keep its `LICENCE.txt` with them |
+| libasterix | ASTERIX | MIT | pip dependency |
+| CS-RID Finder, TAK, GDL90, FLARM, VMS, REST, UDP | | MIT (ours) | standard library only |
+
+Test setups only (built locally from the Docker files, not distributed with the gateways):
+
+| Component | Test setup | Licence |
+|---|---|---|
+| FreeTAKServer 2.2.1 | TAK | EPL-2.0 |
+| Dstl Apex SAPIENT Middleware | SAPIENT | Apache 2.0 (Roke / Dstl, Crown copyright) |
+| etdey/gdl90 | GDL90 | MIT |
+| pynmea2 | FLARM | MIT |
+| cbor2, aiocoap, pycose | CS-RID reference SDSP | MIT; MIT and BSD-3-Clause; BSD-3-Clause |
+| ptr727/NxWitness image | VMS | MIT (the image); **Nx Witness itself is proprietary** (Network Optix EULA): test use only |
+| python:3.11-slim | all receivers | PSF and the Debian packages' licences |
+
+All of these are compatible with shipping the gateways under MIT. Apache 2.0 for the included
+SAPIENT files means: keep the licence file and the copyright notice, and mark changed files
+(we have none: the files are generated with `protoc`, unmodified).

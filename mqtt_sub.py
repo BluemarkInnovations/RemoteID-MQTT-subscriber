@@ -25,6 +25,7 @@ from modules import wlan_stats
 from modules import status_log
 from modules import decode
 from modules import exporters
+from modules import sensor_locations as sensor_locations_mod
 
 class open_drone_id_valid_blocks():
     def __init__(self):
@@ -70,6 +71,41 @@ def connect_mqtt() -> mqtt_client:
     client.connect(config.broker, config.port)
 
     return client
+
+
+_sensor_locations = None
+_SENSOR_SECTIONS = ('location', 'data', 'aircraft', 'status', 'wlan statistics', 'mobile network')
+
+
+def sensor_locations():
+    """The manual fallback positions from config.sensor_locations (ValueError when wrong)."""
+    global _sensor_locations
+    if _sensor_locations is None:
+        _sensor_locations = sensor_locations_mod.SensorLocations(getattr(config, 'sensor_locations', None))
+    return _sensor_locations
+
+
+def handle_manual_location(json_obj):
+    """Give the outputs the manual position of a sensor without a valid GPS position (config.sensor_locations)."""
+    try:
+        locations = sensor_locations()
+    except ValueError as e:
+        print(e)
+        return
+    for key in _SENSOR_SECTIONS:
+        section = json_obj.get(key)
+        if isinstance(section, dict) and section.get('sensor ID') is not None:
+            if key == 'location':
+                locations.gps(section)
+            location_json = locations.seen(section.get('sensor ID'))
+            if location_json is not None:
+                exporters.publish('on_location', location_json)
+                if config.print_messages == True:
+                    print("manual location of sensor %s: %.6f, %.6f, %.0f m (no valid GPS position)" % (
+                        location_json['sensor ID'], location_json['latitude'], location_json['longitude'],
+                        location_json['altitude MSL']))
+                    print("")
+            return
 
 
 def handle_remote_id(data_json):
@@ -161,6 +197,8 @@ def subscribe(client: mqtt_client):
 
             try:
                 if json_obj.get('protocol') == 1.0:
+                    handle_manual_location(json_obj)
+
                     data_json = json_obj.get('data')
                     if isinstance(data_json, dict) and data_json.get('UASdata') is not None:
                         handle_remote_id(data_json)
@@ -204,7 +242,8 @@ def subscribe(client: mqtt_client):
                     try:
                         location_json = json_obj.get('location')
                         location_json.get('sensor ID') # fail if it is data json
-                        exporters.publish('on_location', location_json)
+                        if sensor_locations_mod.valid_fix(location_json):  # no fix: not to the outputs
+                            exporters.publish('on_location', location_json)
                         if config.print_messages == True:
                             print("location message")
                             print("sensor ID............",  location_json.get('sensor ID'))
@@ -272,6 +311,10 @@ def run():
     if not hasattr(config, 'print_messages'):
         config.print_messages = True
 
+    try:
+        sensor_locations()
+    except ValueError as e:
+        raise SystemExit("config.py: %s" % e)
     setup_exporters()
 
     client = connect_mqtt()

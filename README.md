@@ -31,6 +31,8 @@ It is also strongly advised to use secure SSL connection to the MQTT broker (``p
 
 If you want to log the detected Remote ID signals to a CSV file, please uncomment the ``log_path`` variable. Each message type gets its own CSV file in that folder: `*_remoteID_log.csv`, `*_aircraft_log.csv` (ADS-B/UAT, with RSSI in dBm when the sensor knows the tuner gain), `*_status_log.csv` (status, status details, WLAN radio and SDR receiver states) and `*_wlan_stats_log.csv` (WLAN statistics, one row per channel per interval).
 
+Sensors without GPS (no LTE add-on), or whose GPS has no fix: give their position in ``sensor_locations`` (sensor ID -> latitude, longitude, altitude MSL). The integrations (TAK, SAPIENT, FLARM, CS-RID, ...) then get that position as the sensor's location, as long as the sensor sends no location message with a valid fix (for 3 minutes). A valid GPS position always wins. Location messages without a fix (0/0 or no satellites) are not passed on.
+
 To disable printing of RemoteID message on the console uncomment ``print_messages`` variable and set it to False
 
 The subscriber also allows exporting the detections via [SBS BaseStation](http://woodair.net/sbs/article/barebones42_socket_data.htm). See section SBS BaseStation.

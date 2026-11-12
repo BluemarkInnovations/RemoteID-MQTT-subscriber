@@ -159,6 +159,7 @@ def location_event(location_json):
         'altitude_msl_m': location_json.get('altitude MSL'),
         'satellites': location_json.get('satellites'),
         'hdop': location_json.get('HDOP'),
+        'source': location_json.get('source'),          # 'manual': config.sensor_locations, else GPS
     })
 
 

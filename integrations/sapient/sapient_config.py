@@ -54,7 +54,9 @@ sapient_ack_timeout_s = 10
 #sapient_class_lighter_than_air = ('Air Vehicle', 'Lighter Than Air')
 #sapient_class_aircraft = ('Air Vehicle', None)
 
-# Position of sensors without GPS: sensor ID -> (latitude, longitude, altitude MSL in m)
+# Position of sensors without GPS: normally set it once for all outputs in config.py
+# (sensor_locations: used while the sensor has no GPS fix). This one is for SAPIENT only and always
+# overrides the GPS position: sensor ID -> (latitude, longitude, altitude MSL in m)
 #sapient_sensor_positions = {
 #    'ds02261000000948': (52.21852, 6.97486, 30.0),
 #}

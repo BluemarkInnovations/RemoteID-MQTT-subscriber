@@ -73,6 +73,10 @@ def run(name, exporter, stats=None):
     if str(getattr(config, 'client_id', '')).startswith('mqtt-subscriber-'):
         config.client_id = '%s-%s' % (name, secrets.token_hex(4))
 
+    try:
+        mqtt_sub.sensor_locations()                 # manual fallback positions (config.sensor_locations)
+    except ValueError as e:
+        sys.exit("%s: config.py: %s" % (name, e))
     exporters.register(exporter)
 
     def stop(signum, frame):
