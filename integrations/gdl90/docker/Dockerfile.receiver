@@ -1,0 +1,14 @@
+# GDL90 test receiver: the independent etdey/gdl90 decoder (MIT), pinned to a commit.
+# etdey_receiver.py is mounted from the repository (compose.yaml).
+FROM python:3.11-slim
+
+ARG GDL90_COMMIT=a026ec784acecb82741e729b658fc532f396a597
+RUN apt-get update && apt-get install -y --no-install-recommends git ca-certificates \
+ && git clone https://github.com/etdey/gdl90.git /opt/etdey-gdl90 \
+ && git -C /opt/etdey-gdl90 checkout --quiet ${GDL90_COMMIT} \
+ && rm -rf /opt/etdey-gdl90/.git \
+ && apt-get purge -y git && apt-get autoremove -y && rm -rf /var/lib/apt/lists/* \
+ && useradd --create-home --uid 1000 gdl90
+USER gdl90
+ENV PYTHONPATH=/opt/etdey-gdl90 PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1
+CMD ["python3", "/receiver/etdey_receiver.py", "--port", "4000"]

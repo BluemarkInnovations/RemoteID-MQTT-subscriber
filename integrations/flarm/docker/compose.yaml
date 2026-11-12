@@ -1,0 +1,37 @@
+# FLARM NMEA test receivers: parse with the independent pynmea2 library and print every sentence.
+# For development and testing only; ports are published on localhost only.
+#
+#   UDP:  docker compose -f integrations/flarm/docker/compose.yaml up -d --build receiver-udp
+#         python3 integrations/flarm/tools/send_test_events.py --no-tcp --udp 127.0.0.1:10110 --duration 10
+#   TCP:  python3 integrations/flarm/tools/send_test_events.py --tcp-bind 0.0.0.0 --duration 60 &
+#         docker compose -f integrations/flarm/docker/compose.yaml --profile tcp up -d --build receiver-tcp
+#         (connects to port 2000 of the Docker host, like XCSoar does; the firewall must allow it)
+#   docker compose -f integrations/flarm/docker/compose.yaml logs -f
+#   docker compose -f integrations/flarm/docker/compose.yaml --profile tcp down
+name: dronescout-flarm-test
+
+services:
+  receiver-udp:
+    build:
+      context: .
+      dockerfile: Dockerfile.receiver
+    image: dronescout-test/flarm-receiver:pynmea2-1.19.0
+    restart: unless-stopped
+    volumes:
+      - ./nmea_receiver.py:/receiver/nmea_receiver.py:ro
+    ports:
+      - "127.0.0.1:10110:10110/udp"
+    command: ["python3", "/receiver/nmea_receiver.py", "--udp", "10110"]
+
+  receiver-tcp:
+    profiles: ["tcp"]
+    image: dronescout-test/flarm-receiver:pynmea2-1.19.0
+    build:
+      context: .
+      dockerfile: Dockerfile.receiver
+    restart: unless-stopped
+    volumes:
+      - ./nmea_receiver.py:/receiver/nmea_receiver.py:ro
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    command: ["python3", "/receiver/nmea_receiver.py", "--tcp", "host.docker.internal:${FLARM_TCP_PORT:-2000}"]

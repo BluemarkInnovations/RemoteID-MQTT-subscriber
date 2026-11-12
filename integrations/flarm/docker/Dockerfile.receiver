@@ -1,0 +1,7 @@
+# FLARM NMEA test receiver: the independent pynmea2 parser (MIT), pinned.
+# nmea_receiver.py is mounted from the repository (compose.yaml).
+FROM python:3.11-slim
+
+RUN pip install --no-cache-dir pynmea2==1.19.0 && useradd --create-home --uid 1000 nmea
+USER nmea
+ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1

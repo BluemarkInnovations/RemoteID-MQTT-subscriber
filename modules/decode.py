@@ -332,3 +332,23 @@ def drone_id(msg):
             if text:
                 return text
     return (msg.mac_address or '').replace(':', '')
+
+
+def pseudo_icao(text):
+    """24-bit address for an object without one (drones), as 6 hex digits: "FF" (a block no
+    country uses) + a 16-bit checksum of text. Used by the SBS, GDL90 and FLARM outputs, so a
+    drone has the same address everywhere."""
+    checksum1 = checksum2 = 0
+    for c in text.encode('utf-8').hex():
+        checksum1 ^= ord(c)
+        checksum2 ^= checksum1
+    return 'FF%02X%02X' % (checksum1, checksum2)
+
+
+def short_callsign(text):
+    """8-character callsign: IDs longer than 8 characters become the first 4 (the
+    ANSI/CTA-2063 manufacturer code of a serial number) + the last 4 characters."""
+    text = str(text)
+    if len(text) > 8:
+        text = (text[:4] + text[-4:]).ljust(8)
+    return text

@@ -1,0 +1,47 @@
+# VMS test servers. For development and testing only; ports are published on localhost only.
+#
+#   docker compose -f integrations/vms/docker/compose.yaml up -d
+#   integrations/vms/tools/nx_setup.sh                    # first time: set up the Nx Witness system
+#   python3 integrations/vms/tools/send_test_events.py --nx https://127.0.0.1:7001 --milestone 127.0.0.1:1234
+#   docker compose -f integrations/vms/docker/compose.yaml logs -f milestone-mock
+#   docker compose -f integrations/vms/docker/compose.yaml down          # add -v to reset Nx Witness
+#
+# nxwitness: the real Nx Witness media server (Network Optix), community image ptr727/nxwitness.
+#   Web admin: https://127.0.0.1:7001 (self-signed certificate). Generic events need no licence.
+# milestone-mock: XProtect only runs on Windows; this prints what an XProtect generic event data
+#   source would receive (TCP and UDP port 1234, "Compatible" data source, echo of the bytes).
+name: dronescout-vms-test
+
+services:
+  nxwitness:
+    image: ptr727/nxwitness:6.1.2.42921
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:7001:7001"
+    environment:
+      TZ: UTC
+    volumes:
+      - nx-etc:/opt/networkoptix/mediaserver/etc
+      - nx-ini:/home/networkoptix/.config/nx_ini
+      - nx-var:/opt/networkoptix/mediaserver/var
+      - nx-media:/media
+    tmpfs:
+      - /tmp:size=256m,mode=1777
+
+  milestone-mock:
+    image: python:3.11-slim
+    restart: unless-stopped
+    volumes:
+      - ../tools/milestone_mock.py:/mock/milestone_mock.py:ro
+    environment:
+      PYTHONUNBUFFERED: "1"
+    command: ["python3", "/mock/milestone_mock.py", "--port", "1234"]
+    ports:
+      - "127.0.0.1:1234:1234/tcp"
+      - "127.0.0.1:1234:1234/udp"
+
+volumes:
+  nx-etc:
+  nx-ini:
+  nx-var:
+  nx-media:

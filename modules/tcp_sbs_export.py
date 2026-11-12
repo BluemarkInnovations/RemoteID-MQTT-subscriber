@@ -2,6 +2,7 @@ import socket
 import struct
 import config
 from modules import exporters
+from modules import decode
 from modules.decode import nan_to
 
 sbs_connection = None # one SBS client at a time, set by connect()
@@ -18,28 +19,10 @@ def connect(name):
             print("Accepted")
 
 def ICAO(data):
-    ICAO = "FF" # start with FF to indicate an invalid ICAO 24-digit code
-    i = 0
-    checksum1 = 0
-    checksum2 = 0
-
-    data_hex = data.encode("utf-8").hex()
-    while i < len(data_hex):
-        checksum1 = checksum1 ^ ord(data_hex[i])
-        checksum2 = checksum1 ^ checksum2
-        i += 1
-
-    ICAO += str(format(checksum1, '02X')) # add two bytes checksum as ICAO code
-    ICAO += str(format(checksum2, '02X'))
-    return ICAO
+    return decode.pseudo_icao(data)    # "FF" + 16-bit checksum, shared with the GDL90 / FLARM outputs
 
 def callsign(data):
-    callsign = str(data)
-    if len(data) > 8:
-        callsign = str(data[0:4]) # call sign is manufacturer code
-        callsign += str(data[-4:]) # last 4 digit SN
-        callsign = callsign.ljust(8)
-    return callsign
+    return decode.short_callsign(data)
 
 def transmit(data):
     global sbs_connection

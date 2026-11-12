@@ -1,0 +1,22 @@
+# GDL90 test receiver: decodes with the independent etdey/gdl90 library and prints every message.
+# For development and testing only; the port is published on localhost only.
+#
+#   docker compose -f integrations/gdl90/docker/compose.yaml up -d --build
+#   python3 integrations/gdl90/tools/send_test_events.py 127.0.0.1:4000 --ownship --duration 10
+#   docker compose -f integrations/gdl90/docker/compose.yaml logs -f receiver
+#   docker compose -f integrations/gdl90/docker/compose.yaml down
+#
+# Docker's port publishing doesn't forward broadcast: test broadcast with tools/gdl90_dump.py.
+name: dronescout-gdl90-test
+
+services:
+  receiver:
+    build:
+      context: .
+      dockerfile: Dockerfile.receiver
+    image: dronescout-test/gdl90-receiver:a026ec7
+    restart: unless-stopped
+    volumes:
+      - ./etdey_receiver.py:/receiver/etdey_receiver.py:ro
+    ports:
+      - "127.0.0.1:4000:4000/udp"

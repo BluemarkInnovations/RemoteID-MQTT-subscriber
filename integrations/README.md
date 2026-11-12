@@ -10,6 +10,9 @@ subscriber (`mqtt_sub.py`) without console output and CSV logs, with one output 
 | [`asterix/`](asterix/README.md) | EUROCONTROL ASTERIX CAT021, 023, 062, 065, 129 | UDP unicast / multicast | aircraft, drones, sensor status, system tracks | `libasterix` | receiver / decoder with pcap |
 | [`rest/`](rest/README.md) | HTTP POST, JSON | HTTP / HTTPS, bearer, basic or API-key auth | drones, aircraft, sensor status and location | none | example receiver |
 | [`udp/`](udp/README.md) | JSON datagrams | UDP multicast, broadcast or unicast on the local network | the same events as REST, one per datagram | none | none needed (example listener) |
+| [`gdl90/`](gdl90/README.md) | GDL90 (Stratux-style) | UDP, port 4000 | drones (as UAV) and aircraft as traffic in cockpit apps: ForeFlight, Garmin Pilot, SkyDemon | none | receiver with the etdey/gdl90 decoder |
+| [`flarm/`](flarm/README.md) | FLARM NMEA data port | TCP server (port 2000) and/or UDP | drones (as UAV) and aircraft as FLARM traffic: XCSoar, LK8000, SeeYou Navigator | none | receivers with the pynmea2 parser |
+| [`vms/`](vms/README.md) | generic events | Milestone: TCP / UDP text; Nx Witness: REST v4 | drone detected / still present / lost, sensor degraded / normal | none | real Nx Witness 6.1 server + Milestone mock |
 
 Which one to use:
 
@@ -17,6 +20,10 @@ Which one to use:
 - **SAPIENT**: UK MOD / NATO C-UAS systems; the fusion node or DMM speaks BSI Flex 335 v2.0.
 - **ASTERIX**: air traffic management and military air-picture systems.
 - **REST**: anything else: your own back end, a cloud service, a database. The simplest one to start with.
+- **GDL90**: pilots' tablet apps (EFBs), e.g. a display at an airfield or a helicopter base.
+- **FLARM**: gliding and GA software (XCSoar, LK8000), e.g. at a gliding club.
+- **VMS**: security sites with Milestone XProtect or Nx Witness: a drone alarm starts
+  recording, moves a camera or alerts the operator.
 - **UDP**: programs on the local network that can't use MQTT or HTTP: one JSON object per
   datagram, no server needed. No authentication: trusted networks only.
 
@@ -26,7 +33,7 @@ MQTT broker directly; the gateways are for systems that can't.
 ## How a gateway works
 
 ```
-DroneScout sensors ──MQTT──> broker ──> <standard>_gateway.py ──> TAK / SAPIENT / ASTERIX / REST / UDP
+DroneScout sensors ──MQTT──> broker ──> <standard>_gateway.py ──> TAK / SAPIENT / ASTERIX / REST / UDP / GDL90 / FLARM / VMS
                                         │
                                         ├─ mqtt_sub.py         MQTT subscription, message routing
                                         ├─ modules/decode.py   decodes every message once
@@ -73,6 +80,8 @@ Shared code in `modules/`:
   drone (serial number, else another basic ID, else the MAC address) used by every output.
 - `gateway.py`: command line, settings and start-up of a gateway.
 - `json_events.py`: the plain JSON events of the REST and UDP outputs.
+- `decode.pseudo_icao()` / `decode.short_callsign()`: the `FF....` address and 8-character
+  callsign of a drone, shared by the SBS, GDL90 and FLARM outputs.
 - `test_objects.py`: the synthetic test drone, aircraft and sensor used by `send_test_events.py`.
 
 ## Testing without sensors
@@ -91,9 +100,13 @@ docker compose -f integrations/tak/docker/compose.yaml up -d --build        # Fr
 docker compose -f integrations/sapient/docker/compose.yaml up -d --build    # Apex, 5020 (nodes) / 5001 (fusion)
 docker compose -f integrations/asterix/docker/compose.yaml up -d --build    # ASTERIX receiver, UDP 8600
 docker compose -f integrations/rest/docker/compose.yaml up -d --build       # REST receiver, 8080
+docker compose -f integrations/gdl90/docker/compose.yaml up -d --build      # GDL90 receiver (etdey/gdl90), UDP 4000
+docker compose -f integrations/flarm/docker/compose.yaml up -d --build receiver-udp   # FLARM NMEA receiver (pynmea2), UDP 10110
+docker compose -f integrations/vms/docker/compose.yaml up -d                # Nx Witness 7001 + Milestone mock 1234
 ```
 
-They are for development only. A customer's own system (a tak.gov TAK Server, a SAPIENT
+Where a free decoder exists, the test receiver uses it instead of our own code (libasterix,
+etdey/gdl90, pynmea2), so the test also checks the encoders. They are for development only. A customer's own system (a tak.gov TAK Server, a SAPIENT
 fusion node, an ATM system) can behave differently: always repeat the test there with
 `send_test_events.py` before switching to real data.
 

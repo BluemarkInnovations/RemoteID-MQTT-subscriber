@@ -61,7 +61,7 @@ Note: for exporting data, the normal Serial Number of RemoteID is too long. It i
 
 ![RemoteID_data_in_Virtual_Radar_Server_2](./img/virtual_radar_server_remote_id_2.jpg)
 
-### Integrations: TAK, SAPIENT, ASTERIX, REST and UDP
+### Integrations: TAK, SAPIENT, ASTERIX, REST, UDP, GDL90, FLARM and VMS
 Gateways in [`integrations/`](integrations/README.md) pass the detections on to other systems:
 
 - [TAK](integrations/tak/README.md) (ATAK, WinTAK, iTAK, TAK Server): Cursor-on-Target map markers for drones, pilots, aircraft and sensors
@@ -69,6 +69,9 @@ Gateways in [`integrations/`](integrations/README.md) pass the detections on to 
 - [ASTERIX](integrations/asterix/README.md): CAT021, CAT023, CAT129 (UAS identification), CAT062 and CAT065 over UDP
 - [REST](integrations/rest/README.md): JSON over HTTP(S) POST with bearer, basic or API-key authentication
 - [UDP](integrations/udp/README.md): one JSON datagram per event, multicast / broadcast / unicast on the local network
+- [GDL90](integrations/gdl90/README.md): drones and aircraft as traffic in cockpit apps (ForeFlight, Garmin Pilot, SkyDemon)
+- [FLARM](integrations/flarm/README.md): drones and aircraft as FLARM traffic in XCSoar, LK8000, SeeYou Navigator
+- [VMS](integrations/vms/README.md): drone alarms as generic events in Milestone XProtect and Nx Witness
 
 Each has its own README, settings file, test tools and (except UDP) a Docker test server.
 
