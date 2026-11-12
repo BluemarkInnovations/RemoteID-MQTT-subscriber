@@ -1,0 +1,30 @@
+# Reference / test SDSP for DRIP Crowd Sourced RemoteID (EXPERIMENTAL, draft -16).
+# For development and testing only; ports are published on localhost only.
+#
+#   docker compose -f integrations/csrid/docker/compose.yaml up -d --build
+#   python3 integrations/csrid/tools/send_test_events.py --duration 10 --verify http://127.0.0.1:8088
+#   docker compose -f integrations/csrid/docker/compose.yaml logs -f sdsp
+#   curl -s http://127.0.0.1:8088/uas
+#   docker compose -f integrations/csrid/docker/compose.yaml down          # add -v to delete the message log
+name: dronescout-csrid-test
+
+services:
+  sdsp:
+    build:
+      context: ../sdsp
+      dockerfile: ../docker/Dockerfile.sdsp
+    image: dronescout-test/csrid-sdsp:aiocoap-0.4.17
+    restart: unless-stopped
+    volumes:
+      - ../sdsp/sdsp.py:/sdsp/sdsp.py:ro
+      - ../sdsp/brid.py:/sdsp/brid.py:ro
+      - ./finders.json:/sdsp/finders.json:ro
+      - sdsp-data:/data
+    ports:
+      - "127.0.0.1:5683:5683/udp"      # CoAP
+      - "127.0.0.1:8088:8088"          # JSON view
+    command: ["python3", "/sdsp/sdsp.py", "--finders", "/sdsp/finders.json", "--host", "0.0.0.0",
+              "--log", "/data/csrid.jsonl"]
+
+volumes:
+  sdsp-data:

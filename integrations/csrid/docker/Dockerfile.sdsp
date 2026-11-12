@@ -1,0 +1,9 @@
+# Reference / test SDSP for DRIP CS-RID: cbor2, aiocoap and pycose, pinned.
+# sdsp.py and brid.py are mounted from the repository (compose.yaml).
+FROM python:3.11-slim
+
+COPY requirements.txt /tmp/requirements.txt
+RUN pip install --no-cache-dir -r /tmp/requirements.txt && useradd --create-home --uid 1000 sdsp \
+    && mkdir /data && chown sdsp /data
+USER sdsp
+ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1

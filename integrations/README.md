@@ -13,6 +13,7 @@ subscriber (`mqtt_sub.py`) without console output and CSV logs, with one output 
 | [`gdl90/`](gdl90/README.md) | GDL90 (Stratux-style) | UDP, port 4000 | drones (as UAV) and aircraft as traffic in cockpit apps: ForeFlight, Garmin Pilot, SkyDemon | none | receiver with the etdey/gdl90 decoder |
 | [`flarm/`](flarm/README.md) | FLARM NMEA data port | TCP server (port 2000) and/or UDP | drones (as UAV) and aircraft as FLARM traffic: XCSoar, LK8000, SeeYou Navigator | none | receivers with the pynmea2 parser |
 | [`vms/`](vms/README.md) | generic events | Milestone: TCP / UDP text; Nx Witness: REST v4 | drone detected / still present / lost, sensor degraded / normal | none | real Nx Witness 6.1 server + Milestone mock |
+| [`csrid/`](csrid/README.md) | DRIP Crowd Sourced RemoteID, **experimental** (draft -16) | CoAP over UDP, COSE_Mac0 (HMAC) | the received B-RID forwarded to an SDSP, as a CS-RID Finder | none (reference SDSP: cbor2, aiocoap, pycose) | reference SDSP |
 
 Which one to use:
 
@@ -24,6 +25,8 @@ Which one to use:
 - **FLARM**: gliding and GA software (XCSoar, LK8000), e.g. at a gliding club.
 - **VMS**: security sites with Milestone XProtect or Nx Witness: a drone alarm starts
   recording, moves a camera or alerts the operator.
+- **CS-RID**: experiments with DRIP Crowd Sourced RemoteID (U-space / UTM research). Based on
+  an expired Internet-Draft; no production SDSPs exist yet.
 - **UDP**: programs on the local network that can't use MQTT or HTTP: one JSON object per
   datagram, no server needed. No authentication: trusted networks only.
 
@@ -33,7 +36,7 @@ MQTT broker directly; the gateways are for systems that can't.
 ## How a gateway works
 
 ```
-DroneScout sensors ──MQTT──> broker ──> <standard>_gateway.py ──> TAK / SAPIENT / ASTERIX / REST / UDP / GDL90 / FLARM / VMS
+DroneScout sensors ──MQTT──> broker ──> <standard>_gateway.py ──> TAK / SAPIENT / ASTERIX / REST / UDP / GDL90 / FLARM / VMS / CS-RID
                                         │
                                         ├─ mqtt_sub.py         MQTT subscription, message routing
                                         ├─ modules/decode.py   decodes every message once
@@ -103,10 +106,11 @@ docker compose -f integrations/rest/docker/compose.yaml up -d --build       # RE
 docker compose -f integrations/gdl90/docker/compose.yaml up -d --build      # GDL90 receiver (etdey/gdl90), UDP 4000
 docker compose -f integrations/flarm/docker/compose.yaml up -d --build receiver-udp   # FLARM NMEA receiver (pynmea2), UDP 10110
 docker compose -f integrations/vms/docker/compose.yaml up -d                # Nx Witness 7001 + Milestone mock 1234
+docker compose -f integrations/csrid/docker/compose.yaml up -d --build      # CS-RID reference SDSP, CoAP UDP 5683, JSON 8088
 ```
 
 Where a free decoder exists, the test receiver uses it instead of our own code (libasterix,
-etdey/gdl90, pynmea2), so the test also checks the encoders. They are for development only. A customer's own system (a tak.gov TAK Server, a SAPIENT
+etdey/gdl90, pynmea2; the CS-RID SDSP uses cbor2, pycose and aiocoap), so the test also checks the encoders. They are for development only. A customer's own system (a tak.gov TAK Server, a SAPIENT
 fusion node, an ATM system) can behave differently: always repeat the test there with
 `send_test_events.py` before switching to real data.
 

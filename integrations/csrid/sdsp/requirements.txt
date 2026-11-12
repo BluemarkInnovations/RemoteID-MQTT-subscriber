@@ -1,0 +1,4 @@
+# reference SDSP (sdsp.py) only; the Finder (csrid_gateway.py) needs no extra packages
+cbor2==5.9.0          # pycose 1.1.0 can't decode its own messages with cbor2 6.x
+aiocoap==0.4.17
+pycose==1.1.0

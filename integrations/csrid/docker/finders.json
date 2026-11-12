@@ -1,0 +1,5 @@
+{
+  "_comment": "Finders the test SDSP accepts: Finder ID -> HMAC key (hex) and proxy status (forward / reverse / bi-directional). TEST KEYS ONLY, never use them on a real SDSP.",
+  "DRONESCOUT-TEST-FINDER": {"key": "e3153f3d52dc0c1f3eba4a4ab126bd372eb5666ab25023d769b0da05574b405e", "proxy_status": "forward"},
+  "dronescout-finder-1": {"key": "5ad1c1b1d5a0e1f2a3b4c5d6e7f8091a2b3c4d5e6f708192a3b4c5d6e7f80910", "proxy_status": "forward"}
+}
