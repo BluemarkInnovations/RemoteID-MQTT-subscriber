@@ -33,6 +33,30 @@ Which one to use:
 A receiver that can speak MQTT (including Node-RED) can also subscribe to the DroneScout
 MQTT broker directly; the gateways are for systems that can't.
 
+## RemoteID and aircraft data
+
+Both RemoteID (drones) and aircraft data (ADS-B 1090, UAT 978, ADS-L, FLARM, OGN) are passed
+on, as far as the standard of the output has a place for them:
+
+| Output | RemoteID | Aircraft | Aircraft setting (default) | Aircraft data sent |
+|---|---|---|---|---|
+| TAK | yes | yes | `tak_send_aircraft` (on) | all technologies |
+| SAPIENT | yes | yes | `sapient_send_aircraft` (on) | all technologies |
+| ASTERIX | yes (CAT129, CAT062) | yes (CAT021, CAT062) | `asterix_categories` (CAT021 on), `asterix_cat062_aircraft` (off) | CAT021: ADS-B and UAT only; CAT062: all technologies |
+| REST | yes | yes | `rest_send_aircraft` (on) | all technologies |
+| UDP | yes | yes | `udp_send_aircraft` (on) | all technologies |
+| GDL90 | yes | yes | `gdl90_send_aircraft` (on) | all technologies, as traffic reports |
+| FLARM | yes | yes | `flarm_send_aircraft` (on) | all technologies, relative to the own position (`flarm_position` or `flarm_position_sensor`), within `flarm_max_range_m` |
+| VMS | yes | optional | `vms_aircraft` (**off**) | alarms for all technologies; at an airfield every aircraft raises one |
+| CS-RID | yes | no | | the draft only covers broadcast RemoteID |
+
+- TAK, SAPIENT, ASTERIX, GDL90 and FLARM only send aircraft that have a position.
+- ASTERIX sends no ADS-L, FLARM or OGN by default: CAT021 is for ADS-B. To send them, add 62
+  (and 65) to `asterix_categories` and set `asterix_cat062_aircraft = True`. With CAT021 also
+  on, the receiver gets every ADS-B / UAT aircraft twice.
+- `mqtt_sub.py` itself also handles both: console, CSV logs (separate RemoteID and aircraft
+  files) and the SBS BaseStation output.
+
 ## How a gateway works
 
 ```

@@ -64,7 +64,7 @@ Note: for exporting data, the normal Serial Number of RemoteID is too long. It i
 ![RemoteID_data_in_Virtual_Radar_Server_2](./img/virtual_radar_server_remote_id_2.jpg)
 
 ### Integrations: TAK, SAPIENT, ASTERIX, REST, UDP, GDL90, FLARM, VMS and CS-RID
-Gateways in [`integrations/`](integrations/README.md) pass the detections on to other systems:
+Gateways in [`integrations/`](integrations/README.md) pass the detections on to other systems. Both RemoteID and aircraft data (ADS-B, UAT, ADS-L, FLARM, OGN) are sent, see [which output sends what](integrations/README.md#remoteid-and-aircraft-data):
 
 - [TAK](integrations/tak/README.md) (ATAK, WinTAK, iTAK, TAK Server): Cursor-on-Target map markers for drones, pilots, aircraft and sensors
 - [SAPIENT](integrations/sapient/README.md) (BSI Flex 335 v2.0): every sensor as a SAPIENT node at a fusion node / DMM
