@@ -7,7 +7,7 @@ import random
 
 #MQTT broker settings
 broker = 'myserver'
-port = 8883
+port = 1883
 topic = "#"
 
 # generate client ID with pub prefix randomly
@@ -35,5 +35,5 @@ client_id = f'mqtt-subscriber-{random.randint(0, 100)}'
 # latitude, longitude, altitude MSL (m). Used by the outputs (TAK, SAPIENT, FLARM, ...) while a
 # sensor sends no location message with a valid fix (for 3 minutes); a GPS position always wins.
 #sensor_locations = {
-#    'ds02261000000948': (52.21852, 6.97486, 30.0),
+#    'ds02261000000001': (52.21852, 6.97486, 30.0),
 #}
