@@ -24,6 +24,7 @@ from modules import open_drone_id
 from modules import log_remote_id
 from modules import tcp_sbs_export
 from modules import aircraft
+from modules import trust
 
 class open_drone_id_valid_blocks():
     def __init__(self):
@@ -139,6 +140,12 @@ def subscribe(client: mqtt_client):
 
                             if config.print_messages == True:
                                 open_drone_id.print_payload(UASdata, valid_open_drone_id_blocks, data_json, extra_json)
+
+                            if hasattr(config, 'trust_verdicts'): # optional per-transmitter trust verdicts (requires the remoteid package)
+                                if config.trust_verdicts == True:
+                                    trust_verdict = trust.verdict(data_json)
+                                    if trust_verdict is not None and config.print_messages == True:
+                                        trust.print_verdict(trust_verdict)
 
                             try:
                                 tcp_sbs_export.export(UASdata, valid_open_drone_id_blocks)

@@ -35,6 +35,16 @@ To disable printing of RemoteID message on the console uncomment ``print_message
 
 The subscriber also allows exporting the detections via [SBS BaseStation](http://woodair.net/sbs/article/barebones42_socket_data.htm). See section SBS BaseStation.
 
+### Trust verdicts (optional)
+
+The subscriber can show a per-transmitter trust verdict (`authenticated`, `plausible`, `suspicious` or `spoofed`) for each Remote ID data message, based on the raw air interface payload. This checks for kinematic/identity inconsistencies (e.g. teleporting transmitters, reused message counters, known spoofer fingerprints) and verifies DRIP authentication signatures when present. It needs the `raw` field enabled on the receiver and the [remoteid](https://pypi.org/project/remoteid/) package:
+
+```
+pip3 install remoteid
+```
+
+Then uncomment `trust_verdicts = True` in config.py.
+
 ## Add-ons
 Besides broadcast/direct drone Remote ID signals, DroneScout receivers can receive other signals as well. This is introduced in firmware 20240927-1205 (and higher). For instance, an ADS-B 1090 MHz receiver can be added to the receiver. ADS-B transponder are used by most civil airplanes. ADS-B signals include the live location, flight ID and other information. Additonally in the USA (and some other countries), UAT at 978 MHz is used as well. This is a similar technology as ADS-B, but intended for smaller aircraft that fly at a lower alitude. Also DroneScout receivers can be equipped with an UAT 978 MHz receiver. Finally an LTE add-on (modem) can be integrated into the DroneScout receiver. This modem can be used for connectivity, but it can also be used as GNSS (GPS) receiver, so the sensor can tell where it is located. It can also publish mobile network statistics. More information at [https://dronescout.co/](https://dronescout.co/).
 
