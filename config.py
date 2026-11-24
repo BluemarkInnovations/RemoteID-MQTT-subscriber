@@ -27,6 +27,11 @@ client_id = f'mqtt-subscriber-{random.randint(0, 100)}'
 #set to False to disable printing messages on the console
 #print_messages = True
 
+#Optional: show a per-transmitter trust verdict for each Remote ID data message.
+#Requires the raw field in the MQTT data messages (enabled on the receiver) and
+#the remoteid package: pip3 install remoteid
+#trust_verdicts = True
+
 #Export data to Virtual Radar Server or FlightAirMap that support sources with SBS BaseStation output
 #sbs_server_ip_address = "0.0.0.0"  # Standard loopback interface address (localhost)
 #sbs_server_port = 30003  # port
