@@ -3,7 +3,9 @@
 ## What is it?
 This repository contains reference code to subscribe to a MQTT broker and parse data from DroneScout receivers (such as ds230, ds240 or DroneScout SDK). These receivers can be purchased at [https://dronescout.co/](https://dronescout.co/) The manual can be found here: [manual](https://download.bluemark.io/ds230.pdf)
 
-DroneScout receivers detect broadcast/direct drone Remote ID signals (Bluetooth, WLAN); a <em>"wireless number plate"</em> technology that is or becomes mandatory in several parts of the world e.g. USA, EU, Japan. It supports all frequency bands (2.4 and 5 GHz) and transmission protocols (WLAN Beacon, WLAN NaN, Bluetooth 4 Legacy, Bluetooth 5 Long Range.)
+DroneScout receivers detect broadcast/direct drone Remote ID signals (Bluetooth, WLAN); a <em>"wireless number plate"</em> technology that is or becomes mandatory in several parts of the world e.g. USA (F3411), EU (DIN_EN_4709-002), France (DSE), Japan (F3411), China (GB 46750-2025). It supports all frequency bands (2.4 and 5 GHz) and transmission protocols (WLAN Beacon, WLAN NaN, Bluetooth 4 Legacy, Bluetooth 5 Long Range.) Also several add-on are available: ADS-B, UAT and ASD-L receiver, LTE modem, band-pass filters, UPS battery pack.
+
+Upgrade to the latest DroneScout firmware to have access to the latest firmware features.
 
 \#OpenDroneID \#RemoteID \#FAA \#F3411 \#EASA \#DIN_EN_4709-002 \#GB 46750-2025 \#Dispositif de Signalement Electronique (DSE) \#dronetechnology
 
@@ -29,7 +31,7 @@ In the config.py file, enter the correct settings for the ``broker``, ``port``. 
 
 It is also strongly advised to use secure SSL connection to the MQTT broker (``port`` 8883). For that also set the client_pem file. In case of non-SSL connections, use the ``port`` 1883.
 
-If you want to log the detected Remote ID signals to a CSV file, please uncomment the ``log_path`` variable. Each message type gets its own CSV file in that folder: `*_remoteID_log.csv`, `*_aircraft_log.csv` (ADS-B/UAT, with RSSI in dBm when the sensor knows the tuner gain), `*_status_log.csv` (status, status details, WLAN radio and SDR receiver states) and `*_wlan_stats_log.csv` (WLAN statistics, one row per channel per interval).
+If you want to log the detected Remote ID signals to a CSV file, please uncomment the ``log_path`` variable. Each message type gets its own CSV file in that folder: `*_remoteID_log.csv`, `*_aircraft_log.csv` (ADS-B/UAT/ADS-L, with RSSI in dBm when the sensor knows the tuner gain), `*_status_log.csv` (status, status details, WLAN radio and SDR receiver states) and `*_wlan_stats_log.csv` (WLAN statistics, one row per channel per interval).
 
 Sensors without GPS (no LTE add-on), or whose GPS has no fix: give their position in `config.py`, ``sensor_locations`` (sensor ID -> latitude, longitude, altitude MSL). The integrations (TAK, SAPIENT, FLARM, CS-RID, ...) then get that position as the sensor's location, as long as the sensor sends no location message with a valid fix (for 3 minutes). A valid GPS position always wins. Location messages without a fix (0/0 or no satellites) are not passed on.
 
@@ -41,7 +43,7 @@ The subscriber also allows exporting the detections via [SBS BaseStation](http:/
 Besides broadcast/direct drone Remote ID signals, DroneScout receivers can receive other signals as well. This is introduced in firmware 20240927-1205 (and higher). For instance, an ADS-B 1090 MHz receiver/add-on can be added to the receiver. ADS-B transponder are used by most civil airplanes. ADS-B signals include the live location, flight ID and other information. Additonally in the USA (and some other countries), UAT at 978 MHz is used as well. This is a similar technology as ADS-B, but intended for smaller aircraft that fly at a lower alitude.  Also DroneScout receivers can be equipped with an UAT 978 MHz receiver. For Europe, an ADS-L receiver/add-on at 868 MHz is availabe, similar technology for smaller aircraft that fly at a lower alitude in EASE region. Finally an LTE add-on (modem) can be integrated into the DroneScout receiver. This modem can be used for connectivity, but it can also be used as GNSS (GPS) receiver, so the sensor can tell where it is located. It can also publish mobile network statistics. More information at [https://dronescout.co/](https://dronescout.co/).
 
 ### Status and WLAN statistics
-Newer firmware adds receiver health to the status message: `"status"` becomes `degraded` when an expected receiver does not work, `"status details"` says which one and why, and `"WLAN radios"` / `"SDR receivers"` give the state of each radio (`ok`, `quiet`, `stalled` or `missing`). The sensor also publishes a `"wlan statistics"` message per WLAN radio every interval (default 300 s), with per-channel packet counts, utilization, noise and signal levels, a congestion level for the RemoteID channel 6, receiver hardware counters and, with the LTE add-on, the LTE band. The subscriber prints these and logs them when `log_path` is set.
+Latest firmware adds receiver health to the status message: `"status"` becomes `degraded` when an expected receiver does not work, `"status details"` says which one and why, and `"WLAN radios"` / `"SDR receivers"` give the state of each radio (`ok`, `quiet`, `stalled` or `missing`). The sensor also publishes a `"wlan statistics"` message per WLAN radio every interval (default 300 s), with per-channel packet counts, utilization, noise and signal levels, a congestion level for the RemoteID channel 6, receiver hardware counters and, with the LTE add-on, the LTE band. The subscriber prints these and logs them when `log_path` is set.
 
 ## Usage
 Start the script to receive and show Remote ID signals of nearby drones.
@@ -63,7 +65,7 @@ Note: for exporting data, the normal Serial Number of RemoteID is too long. It i
 
 ![RemoteID_data_in_Virtual_Radar_Server_2](./img/virtual_radar_server_remote_id_2.jpg)
 
-### Integrations: TAK, SAPIENT, ASTERIX, REST, UDP, GDL90, FLARM, VMS and CS-RID
+### Integrations (beta)
 Gateways in [`integrations/`](integrations/README.md) pass the detections on to other systems. Both RemoteID and aircraft data (ADS-B, UAT, ADS-L, FLARM, OGN) are sent, see [which output sends what](integrations/README.md#remoteid-and-aircraft-data):
 
 - [TAK](integrations/tak/README.md) (ATAK, WinTAK, iTAK, TAK Server): Cursor-on-Target map markers for drones, pilots, aircraft and sensors

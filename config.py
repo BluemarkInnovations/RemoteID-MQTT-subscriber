@@ -9,6 +9,7 @@ import random
 broker = 'myserver'
 port = 1883
 topic = "#"
+qos = 1
 
 # generate client ID with pub prefix randomly
 client_id = f'mqtt-subscriber-{random.randint(0, 100)}'

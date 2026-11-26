@@ -1,4 +1,4 @@
-# Integrations
+# Integrations (beta)
 
 Gateways that pass DroneScout detections on to other systems. Each one is the MQTT
 subscriber (`mqtt_sub.py`) without console output and CSV logs, with one output attached:

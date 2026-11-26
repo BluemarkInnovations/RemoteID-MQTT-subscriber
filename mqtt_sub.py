@@ -293,7 +293,7 @@ def subscribe(client: mqtt_client):
             except:
                 pass
 
-    client.subscribe(config.topic)
+    client.subscribe(config.topic, config.qos)
     client.on_message = on_message
 
 def setup_exporters(threaded=True, start_sbs_listener=True):
